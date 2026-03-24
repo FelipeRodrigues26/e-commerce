@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine
 import models, schemas
@@ -8,6 +9,14 @@ import requests
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Orders Service", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
 
