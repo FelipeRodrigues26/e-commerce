@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: defaultdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d defaultdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  users-service:
+    build:
+      context: ./backend/users-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@db:5432/users_db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/users-service:/app
+
+  orders-service:
+    build:
+      context: ./backend/orders-service
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@db:5432/orders_db
+      - USERS_SERVICE_URL=http://users-service:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/orders-service:/app
+
+volumes:
+  postgres_data:
