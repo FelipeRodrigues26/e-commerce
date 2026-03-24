@@ -45,5 +45,20 @@ services:
     volumes:
       - ./backend/orders-service:/app
 
+  shell-ui:
+    build:
+      context: ./frontend/shell-ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - orders-ui
+
+  orders-ui:
+    build:
+      context: ./frontend/orders-ui
+    ports:
+      - "3001:3001"
+
 volumes:
   postgres_data:
+
