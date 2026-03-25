@@ -1,5 +1,7 @@
 import React, { Suspense, useState } from 'react';
 
+import UsersApp from './UsersApp';
+
 const OrdersApp = React.lazy(() => import('orders_ui/OrdersApp'));
 
 function LoginForm({ onLogin }) {
@@ -47,6 +49,7 @@ function LoginForm({ onLogin }) {
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('jwt_token'));
+  const [view, setView] = useState('pedidos');
 
   const handleLogin = (jwt) => {
     localStorage.setItem('jwt_token', jwt);
@@ -65,14 +68,37 @@ function App() {
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
       <header style={{ padding: '1rem', background: '#333', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{margin: 0}}>E-commerce</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <h1 style={{margin: 0, fontSize: '1.5rem'}}>E-commerce</h1>
+          <nav style={{ display: 'flex', gap: '1rem' }}>
+            <button 
+              onClick={() => setView('pedidos')} 
+              style={{ background: view === 'pedidos' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
+              📦 Pedidos
+            </button>
+            <button 
+              onClick={() => setView('usuarios')} 
+              style={{ background: view === 'usuarios' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
+              👥 Usuários
+            </button>
+          </nav>
+        </div>
         <button onClick={handleLogout} style={{background: 'transparent', border: '1px solid white', color: 'white', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: 4}}>Sair</button>
       </header>
       <main style={{ padding: '2rem' }}>
-        <h2 style={{marginTop: 0}}>Painel de Pedidos</h2>
-        <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
-          <OrdersApp />
-        </Suspense>
+        {view === 'pedidos' ? (
+          <>
+            <h2 style={{marginTop: 0}}>Painel de Pedidos</h2>
+            <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
+              <OrdersApp />
+            </Suspense>
+          </>
+        ) : (
+          <>
+            <h2 style={{marginTop: 0}}>Gestão de Usuários</h2>
+            <UsersApp />
+          </>
+        )}
       </main>
     </div>
   );

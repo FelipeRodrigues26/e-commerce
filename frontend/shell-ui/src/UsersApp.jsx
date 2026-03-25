@@ -1,0 +1,86 @@
+import React, { useState, useEffect } from 'react';
+
+function UsersApp() {
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
+
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+  });
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('http://localhost:8001/users/', { headers: getHeaders() });
+      const data = await res.json();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError('Erro ao carregar usuários.');
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:8001/users/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) {
+        setForm({ username: '', email: '', password: '' });
+        fetchUsers();
+        alert('Usuário criado com sucesso!');
+      } else {
+        const errData = await res.json();
+        alert(errData.detail || 'Erro ao criar usuário.');
+      }
+    } catch (err) {
+      alert('Erro de conexão.');
+    }
+  };
+
+  return (
+    <div>
+      <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem', border: '1px solid #ddd' }}>
+        <h3 style={{ marginTop: 0 }}>Novo Usuário</h3>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <input placeholder="Username" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required />
+          <input placeholder="Email" type="email" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
+          <input placeholder="Senha" type="password" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+          <button type="submit" style={{ padding: '0.5rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Cadastrar</button>
+        </form>
+      </div>
+
+      <h3>Lista de Usuários</h3>
+      {error && <p style={{color: 'red'}}>{error}</p>}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+        <thead style={{ background: '#eee' }}>
+          <tr>
+            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>ID</th>
+            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Username</th>
+            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Email</th>
+            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(u => (
+            <tr key={u.id}>
+              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.id}</td>
+              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.username}</td>
+              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.email}</td>
+              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.is_active ? '✅ Ativo' : '❌ Inativo'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default UsersApp;

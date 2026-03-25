@@ -7,6 +7,8 @@ function OrdersApp() {
   const [catalog, setCatalog] = useState([]);
   const [filterStatus, setFilterStatus] = useState('');
   const [form, setForm] = useState({ user_id: 1, product_name: '', quantity: 1 });
+  const [searchId, setSearchId] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -33,6 +35,22 @@ function OrdersApp() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const fetchOrderById = async () => {
+    if (!searchId) return;
+    try {
+      const res = await fetch(`${API_URL}/${searchId}`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResult(data);
+      } else {
+        alert('Pedido não encontrado.');
+        setSearchResult(null);
+      }
+    } catch (e) {
+      alert('Erro na busca.');
     }
   };
 

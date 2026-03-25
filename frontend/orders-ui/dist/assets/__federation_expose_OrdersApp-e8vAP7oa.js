@@ -32,6 +32,8 @@ function OrdersApp() {
   const [catalog, setCatalog] = useState([]);
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ user_id: 1, product_name: "", quantity: 1 });
+  const [searchId, setSearchId] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
   const getHeaders = () => ({
     "Content-Type": "application/json",
     "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
