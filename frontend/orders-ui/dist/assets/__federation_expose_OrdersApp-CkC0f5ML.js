@@ -59,6 +59,21 @@ function OrdersApp() {
       console.error(e);
     }
   };
+  const fetchOrderById = async () => {
+    if (!searchId) return;
+    try {
+      const res = await fetch(`${API_URL}/${searchId}`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResult(data);
+      } else {
+        alert("Pedido não encontrado.");
+        setSearchResult(null);
+      }
+    } catch (e) {
+      alert("Erro na busca.");
+    }
+  };
   useEffect(() => {
     fetchOrders();
     fetchCatalog();
@@ -84,6 +99,48 @@ function OrdersApp() {
   const filteredOrders = filterStatus ? orders.filter((o) => o.status === filterStatus) : orders;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "1rem", border: "1px solid #ddd", borderRadius: "8px", background: "white" }, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "Gestão de Pedidos " }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginBottom: "1rem", display: "flex", gap: "0.5rem", background: "#f4f4f4", padding: "1rem", borderRadius: 8 }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          placeholder: "ID do Pedido (Ex: 1)",
+          style: { padding: "0.5rem", flex: 1, borderRadius: 4, border: "1px solid #ccc" },
+          value: searchId,
+          onChange: (e) => setSearchId(e.target.value)
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          onClick: fetchOrderById,
+          style: { padding: "0.5rem 1rem", background: "#333", color: "white", border: "none", borderRadius: 4, cursor: "pointer" },
+          children: "🔍 Consultar por ID"
+        }
+      )
+    ] }),
+    searchResult && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginBottom: "1rem", padding: "1rem", border: "2px solid #28a745", borderRadius: 8, background: "#e9f7ef" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h4", { style: { margin: 0 }, children: [
+          "Resultado da Busca (ID: ",
+          searchResult.id,
+          ")"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => setSearchResult(null), style: { background: "none", border: "none", color: "#666", cursor: "pointer", fontWeight: "bold" }, children: "X Fechar" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: "Produto:" }),
+        " ",
+        searchResult.product_name,
+        " | ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: "Quantidade:" }),
+        " ",
+        searchResult.quantity,
+        " | ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: "Status:" }),
+        " ",
+        searchResult.status
+      ] })
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginBottom: "1rem", padding: "1rem", background: "#f9f9f9", borderRadius: "4px" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { style: { marginTop: 0 }, children: "Novo Pedido (Usuário Fixo #1)" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCreate, children: [

@@ -85,6 +85,31 @@ function OrdersApp() {
     <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white' }}>
       <h3 style={{marginTop: 0}}>Gestão de Pedidos </h3>
 
+      {/* Busca por ID */}
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', background: '#f4f4f4', padding: '1rem', borderRadius: 8 }}>
+        <input 
+          placeholder="ID do Pedido (Ex: 1)" 
+          style={{ padding: '0.5rem', flex: 1, borderRadius: 4, border: '1px solid #ccc' }} 
+          value={searchId} 
+          onChange={e => setSearchId(e.target.value)} 
+        />
+        <button 
+          onClick={fetchOrderById} 
+          style={{ padding: '0.5rem 1rem', background: '#333', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+          🔍 Consultar por ID
+        </button>
+      </div>
+
+      {searchResult && (
+        <div style={{ marginBottom: '1rem', padding: '1rem', border: '2px solid #28a745', borderRadius: 8, background: '#e9f7ef' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4 style={{ margin: 0 }}>Resultado da Busca (ID: {searchResult.id})</h4>
+            <button onClick={() => setSearchResult(null)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontWeight: 'bold' }}>X Fechar</button>
+          </div>
+          <p><strong>Produto:</strong> {searchResult.product_name} | <strong>Quantidade:</strong> {searchResult.quantity} | <strong>Status:</strong> {searchResult.status}</p>
+        </div>
+      )}
+
       <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4 style={{marginTop: 0}}>Novo Pedido (Usuário Fixo #1)</h4>
         <form onSubmit={handleCreate}>
