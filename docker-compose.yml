@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  db:
+  db-server:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: admin
@@ -24,9 +24,9 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - DATABASE_URL=postgresql://admin:adminpassword@db:5432/users_db
+      - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/users_db
     depends_on:
-      db:
+      db-server:
         condition: service_healthy
     volumes:
       - ./backend/users-service:/app
@@ -37,10 +37,10 @@ services:
     ports:
       - "8002:8000"
     environment:
-      - DATABASE_URL=postgresql://admin:adminpassword@db:5432/orders_db
+      - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/orders_db
       - USERS_SERVICE_URL=http://users-service:8000
     depends_on:
-      db:
+      db-server:
         condition: service_healthy
     volumes:
       - ./backend/orders-service:/app
@@ -50,6 +50,12 @@ services:
       context: ./frontend/shell-ui
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend/shell-ui:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_USE_POLLING=true
     depends_on:
       - orders-ui
 
@@ -58,6 +64,31 @@ services:
       context: ./frontend/orders-ui
     ports:
       - "3001:3001"
+    volumes:
+      - ./frontend/orders-ui:/app
+      - /app/node_modules
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  catalog-service:
+    build:
+      context: ./backend/catalog-service
+    ports:
+      - "8003:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/catalog_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      db-server:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend/catalog-service:/app
 
 volumes:
   postgres_data:

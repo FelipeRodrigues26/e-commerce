@@ -4,6 +4,7 @@ const API_URL = 'http://localhost:8002/orders';
 
 function OrdersApp() {
   const [orders, setOrders] = useState([]);
+  const [catalog, setCatalog] = useState([]);
   const [filterStatus, setFilterStatus] = useState('');
   const [form, setForm] = useState({ user_id: 1, product_name: '', quantity: 1 });
 
@@ -17,8 +18,22 @@ function OrdersApp() {
     }
   };
 
+  const fetchCatalog = async () => {
+    try {
+      const res = await fetch('http://localhost:8003/catalog/');
+      const data = await res.json();
+      setCatalog(Array.isArray(data) ? data : []);
+      if (data.length > 0) {
+        setForm(f => ({ ...f, product_name: data[0].name }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchCatalog();
   }, []);
 
   const handleCreate = async (e) => {
@@ -45,12 +60,16 @@ function OrdersApp() {
 
   return (
     <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white' }}>
-      <h3 style={{marginTop: 0}}>Gestão de Pedidos (MFE Remoto)</h3>
+      <h3 style={{marginTop: 0}}>Gestão de Pedidos </h3>
 
       <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f9f9f9', borderRadius: '4px' }}>
         <h4 style={{marginTop: 0}}>Novo Pedido (Usuário Fixo #1)</h4>
         <form onSubmit={handleCreate}>
-          <input placeholder="Nome do Produto" value={form.product_name} onChange={e => setForm({...form, product_name: e.target.value})} required style={{marginRight: '0.5rem', padding: '0.3rem'}}/>
+          <select value={form.product_name} onChange={e => setForm({...form, product_name: e.target.value})} required style={{marginRight: '0.5rem', padding: '0.3rem'}}>
+            {catalog.map(item => (
+              <option key={item.id} value={item.name}>{item.name} - R${item.price.toFixed(2)}</option>
+            ))}
+          </select>
           <input type="number" value={form.quantity} onChange={e => setForm({...form, quantity: parseInt(e.target.value)})} min="1" required style={{marginRight: '0.5rem', width: '60px', padding: '0.3rem'}}/>
           <button type="submit" style={{padding: '0.3rem 1rem', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>Criar Pedido</button>
         </form>

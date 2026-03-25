@@ -7,6 +7,4 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build
-
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3001"]
+CMD ["sh", "-c", "npm run build && npm run preview -- --host 0.0.0.0 --port 3001"]

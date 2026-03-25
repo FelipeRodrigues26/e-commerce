@@ -47,7 +47,7 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
 
 @app.get("/orders/", response_model=list[schemas.OrderResponse])
 def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    orders = db.query(models.Order).offset(skip).limit(limit).all()
+    orders = db.query(models.Order).order_by(models.Order.id).offset(skip).limit(limit).all()
     return orders
 
 @app.get("/orders/{order_id}", response_model=schemas.OrderResponse)
