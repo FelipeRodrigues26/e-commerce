@@ -1,12 +1,29 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from database import get_db, Base, engine
+from database import get_db, Base, engine, SessionLocal
 import models, schemas
 import os
 import requests
 
 Base.metadata.create_all(bind=engine)
+
+def seed_db():
+    db = SessionLocal()
+    try:
+        if db.query(models.Order).count() == 0:
+            db.add_all([
+                models.Order(user_id=1, product_name="Teclado Mecânico", quantity=1, status="PENDING"),
+                models.Order(user_id=2, product_name="Monitor 27 Polegadas", quantity=2, status="SHIPPED"),
+                models.Order(user_id=1, product_name="Mouse Gamer Sem Fio", quantity=1, status="DELIVERED"),
+                models.Order(user_id=3, product_name="Cadeira Ergonômica", quantity=1, status="PENDING"),
+                models.Order(user_id=2, product_name="Headset 7.1 Surround", quantity=1, status="SHIPPED")
+            ])
+            db.commit()
+    finally:
+        db.close()
+
+seed_db()
 
 app = FastAPI(title="Orders Service", version="1.0.0")
 
