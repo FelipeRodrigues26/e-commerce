@@ -4,11 +4,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database import Base, get_db
 from main import app
+from sqlalchemy.pool import StaticPool
 import models
 
-# Configuração do banco de dados de teste (SQLite em memória)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# Configuração do banco de dados de teste (SQLite em memória com Pool Estático)
+SQLALCHEMY_DATABASE_URL = "sqlite://"
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base.metadata.create_all(bind=engine)
@@ -58,3 +63,14 @@ def test_login():
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
+
+def test_get_user_by_id():
+    response = client.get("/users/1")
+    assert response.status_code == 200
+    data = response.json()
+    assert "id" in data
+    assert data["id"] == 1
+
+def test_get_user_not_found():
+    response = client.get("/users/999")
+    assert response.status_code == 404
