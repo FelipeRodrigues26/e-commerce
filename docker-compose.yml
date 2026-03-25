@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: adminpassword
       POSTGRES_DB: defaultdb
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - ./infra/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
       - postgres_data:/var/lib/postgresql/data

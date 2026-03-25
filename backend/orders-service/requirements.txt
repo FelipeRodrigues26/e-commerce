@@ -3,4 +3,8 @@ sqlalchemy
 psycopg2-binary
 pydantic
 pydantic-settings
+pyjwt
 requests
+pytest
+pytest-asyncio
+httpx

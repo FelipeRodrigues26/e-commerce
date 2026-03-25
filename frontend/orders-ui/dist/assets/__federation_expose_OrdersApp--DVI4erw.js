@@ -32,9 +32,13 @@ function OrdersApp() {
   const [catalog, setCatalog] = useState([]);
   const [filterStatus, setFilterStatus] = useState("");
   const [form, setForm] = useState({ user_id: 1, product_name: "", quantity: 1 });
+  const getHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
+  });
   const fetchOrders = async () => {
     try {
-      const res = await fetch(API_URL + "/");
+      const res = await fetch(API_URL + "/", { headers: getHeaders() });
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -43,7 +47,7 @@ function OrdersApp() {
   };
   const fetchCatalog = async () => {
     try {
-      const res = await fetch("http://localhost:8003/catalog/");
+      const res = await fetch("http://localhost:8003/catalog/", { headers: getHeaders() });
       const data = await res.json();
       setCatalog(Array.isArray(data) ? data : []);
       if (data.length > 0) {
@@ -61,16 +65,16 @@ function OrdersApp() {
     e.preventDefault();
     await fetch(API_URL + "/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify(form)
     });
     fetchOrders();
-    setForm({ ...form, product_name: "", quantity: 1 });
+    setForm({ ...form, quantity: 1 });
   };
   const updateStatus = async (id, status) => {
     await fetch(`${API_URL}/${id}/status`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify({ status })
     });
     fetchOrders();

@@ -5,6 +5,22 @@ from database import get_db, Base, engine, SessionLocal
 import models, schemas
 import os
 import requests
+import jwt
+from fastapi.security import OAuth2PasswordBearer
+
+SECRET_KEY = "my_super_secret_jwt_key"
+ALGORITHM = "HS256"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://localhost:8001/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 Base.metadata.create_all(bind=engine)
 
@@ -38,7 +54,7 @@ app.add_middleware(
 USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
 
 @app.post("/orders/", response_model=schemas.OrderResponse)
-def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+def create_order(order: schemas.OrderCreate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_order = models.Order(**order.model_dump())
     db.add(db_order)
     db.commit()
@@ -58,7 +74,7 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     return order
 
 @app.patch("/orders/{order_id}/status", response_model=schemas.OrderResponse)
-def update_order_status(order_id: int, status_update: schemas.OrderUpdateStatus, db: Session = Depends(get_db)):
+def update_order_status(order_id: int, status_update: schemas.OrderUpdateStatus, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

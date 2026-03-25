@@ -1,15 +1,75 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 
 const OrdersApp = React.lazy(() => import('orders_ui/OrdersApp'));
 
+function LoginForm({ onLogin }) {
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:8001/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username, password })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        onLogin(data.access_token);
+      } else {
+        setError('Usuário ou senha inválidos.');
+      }
+    } catch(err) {
+      setError('Erro de conexão com o servidor de autenticação.');
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 350, margin: '80px auto', padding: '2rem', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontFamily: 'sans-serif' }}>
+       <h2 style={{marginTop: 0, textAlign: 'center'}}>Login no MVP</h2>
+       {error && <p style={{color: 'red', textAlign: 'center', fontSize: '14px'}}>{error}</p>}
+       <form onSubmit={handleSubmit}>
+         <div style={{marginBottom: '1rem'}}>
+           <label style={{display: 'block', marginBottom: '0.3rem', fontSize: '14px', fontWeight: 'bold'}}>Usuário</label>
+           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} value={username} onChange={e=>setUsername(e.target.value)} required />
+         </div>
+         <div style={{marginBottom: '1.5rem'}}>
+           <label style={{display: 'block', marginBottom: '0.3rem', fontSize: '14px', fontWeight: 'bold'}}>Senha</label>
+           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+         </div>
+         <button style={{width: '100%', padding: '0.8rem', background: '#333', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold'}}>Fazer Login</button>
+       </form>
+    </div>
+  )
+}
+
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('jwt_token'));
+
+  const handleLogin = (jwt) => {
+    localStorage.setItem('jwt_token', jwt);
+    setToken(jwt);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt_token');
+    setToken(null);
+  };
+
+  if (!token) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
-      <header style={{ padding: '1rem', background: '#333', color: 'white' }}>
-        <h1>E-commerce</h1>
+      <header style={{ padding: '1rem', background: '#333', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{margin: 0}}>E-commerce</h1>
+        <button onClick={handleLogout} style={{background: 'transparent', border: '1px solid white', color: 'white', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: 4}}>Sair</button>
       </header>
       <main style={{ padding: '2rem' }}>
-        <h2>Painel de Pedidos</h2>
+        <h2 style={{marginTop: 0}}>Painel de Pedidos</h2>
         <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
           <OrdersApp />
         </Suspense>

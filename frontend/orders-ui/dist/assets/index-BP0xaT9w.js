@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-BMdLx5XD.js';
-import OrdersApp, { j as jsxRuntimeExports } from './__federation_expose_OrdersApp-B6DTg9cs.js';
+import OrdersApp, { j as jsxRuntimeExports } from './__federation_expose_OrdersApp--DVI4erw.js';
 import { r as reactDomExports } from './index-COvqqES_.js';
 
 var client = {};
