@@ -58,6 +58,7 @@ services:
       - VITE_USE_POLLING=true
     depends_on:
       - orders-ui
+      - catalog-ui
 
   orders-ui:
     build:
@@ -66,6 +67,15 @@ services:
       - "3001:3001"
     volumes:
       - ./frontend/orders-ui:/app
+      - /app/node_modules
+
+  catalog-ui:
+    build:
+      context: ./frontend/catalog-ui
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./frontend/catalog-ui:/app
       - /app/node_modules
 
   redis:

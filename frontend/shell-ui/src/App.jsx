@@ -3,6 +3,7 @@ import React, { Suspense, useState } from 'react';
 import UsersApp from './UsersApp';
 
 const OrdersApp = React.lazy(() => import('orders_ui/OrdersApp'));
+const CatalogApp = React.lazy(() => import('catalog_ui/CatalogApp'));
 
 function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('admin');
@@ -77,6 +78,11 @@ function App() {
               👥 Usuários
             </button>
             <button 
+              onClick={() => setView('catalog')} 
+              style={{ background: view === 'catalog' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
+              🛍️ Catálogo
+            </button>
+            <button 
               onClick={() => setView('pedidos')} 
               style={{ background: view === 'pedidos' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
               📦 Pedidos
@@ -91,6 +97,13 @@ function App() {
             <h2 style={{marginTop: 0}}>Painel de Pedidos</h2>
             <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
               <OrdersApp />
+            </Suspense>
+          </>
+        ) : view === 'catalog' ? (
+          <>
+            <h2 style={{marginTop: 0}}>Gestão de Catálogo</h2>
+            <Suspense fallback={<div>Carregando Catálogo...</div>}>
+              <CatalogApp />
             </Suspense>
           </>
         ) : (

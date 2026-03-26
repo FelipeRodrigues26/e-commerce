@@ -30,7 +30,7 @@ def seed_catalog():
             
         # Redis Cache Seeding
         products = db.query(models.Product).all()
-        catalog = [{"id": p.id, "name": p.name, "price": p.price} for p in products]
+        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
         redis_client.set("catalog", json.dumps(catalog))
     except Exception as e:
         print(f"Error seeding catalog: {e}")
@@ -64,9 +64,36 @@ def get_catalog(db: Session = Depends(get_db)):
     
     # 3. Update Redis cache if possible
     try:
-        catalog = [{"id": p.id, "name": p.name, "price": p.price} for p in products]
+        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
         redis_client.set("catalog", json.dumps(catalog))
     except redis.RedisError:
         pass 
         
     return products
+
+@app.post("/catalog/", response_model=schemas.ProductResponse)
+def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+    new_product = models.Product(**product.model_dump())
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    # Invalida o cache
+    try:
+        redis_client.delete("catalog")
+    except redis.RedisError:
+        pass
+    return new_product
+
+@app.delete("/catalog/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    # Invalida o cache
+    try:
+        redis_client.delete("catalog")
+    except redis.RedisError:
+        pass
+    return {"detail": "Product deleted"}
