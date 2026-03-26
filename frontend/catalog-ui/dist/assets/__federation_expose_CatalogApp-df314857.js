@@ -45,7 +45,7 @@ function CatalogApp() {
       setItems(sortedData);
     } catch (e) {
       console.error(e);
-      setFeedback({ type: "error", message: "⚠️ Serviço de Catálogo offline ou inacessível." });
+      setFeedback({ type: "error", message: "Serviço de Catálogo offline ou inacessível." });
     }
   };
   useEffect(() => {
@@ -89,11 +89,12 @@ function CatalogApp() {
       if (res.ok) {
         cancelEdit();
         fetchCatalog();
+        setFeedback({ type: "success", message: "Produto atualizado com sucesso! ✅" });
       } else {
-        alert("Erro ao atualizar o item.");
+        setFeedback({ type: "error", message: "Erro ao atualizar o item." });
       }
     } catch (e2) {
-      alert("Erro de conexão.");
+      setFeedback({ type: "error", message: "Erro de conexão." });
     }
   };
   const handleDelete = async (id) => {
@@ -103,14 +104,36 @@ function CatalogApp() {
       const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchCatalog();
+        setFeedback({ type: "success", message: "Produto excluído com sucesso! 🗑️" });
       } else {
-        alert("Erro ao excluir.");
+        setFeedback({ type: "error", message: "Erro ao excluir." });
       }
     } catch (e) {
-      alert("Erro de conexão.");
+      setFeedback({ type: "error", message: "Erro de conexão." });
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "1rem" }, children: [
+    feedback.message && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: {
+      background: feedback.type === "success" ? "#f0fdf4" : "#fef2f2",
+      border: feedback.type === "success" ? "1px solid #bbf7d0" : "1px solid #fecaca",
+      color: feedback.type === "success" ? "#15803d" : "#b91c1c",
+      padding: "1rem",
+      borderRadius: 8,
+      marginBottom: "1.5rem",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      fontSize: "14px",
+      fontWeight: "500",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+    }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+        feedback.type === "success" ? "✅" : "⚠️",
+        " ",
+        feedback.message
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => setFeedback({ type: "", message: "" }), style: { background: "none", border: "none", color: feedback.type === "success" ? "#15803d" : "#b91c1c", cursor: "pointer", fontWeight: "bold", fontSize: "18px" }, children: "×" })
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: isEditing ? "#fffbeb" : "#f9f9f9", padding: "1.5rem", borderRadius: 8, marginBottom: "2rem", border: isEditing ? "1px solid #fde68a" : "1px solid #ddd", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0, color: isEditing ? "#92400e" : "#111827" }, children: isEditing ? `📝 Editando Produto ${editingId}` : "🛍️ Novo Item no Catálogo" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: isEditing ? handleUpdate : handleCreate, style: { display: "flex", gap: "1rem", flexWrap: "wrap" }, children: [

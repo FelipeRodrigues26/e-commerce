@@ -5,7 +5,7 @@ const currentImports = {};
       let moduleMap = {
 "./CatalogApp":()=>{
       dynamicLoadingCss([], false, './CatalogApp');
-      return __federation_import('./__federation_expose_CatalogApp-1e727e77.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      return __federation_import('./__federation_expose_CatalogApp-df314857.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;

@@ -66,7 +66,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
         if not any(u["id"] == order.user_id for u in users):
             raise HTTPException(status_code=400, detail=f"User {order.user_id} not found")
     except requests.RequestException:
-        raise HTTPException(status_code=500, detail="Error communicating with User Service")
+        raise HTTPException(status_code=500, detail="Não foi possível validar o usuário. Serviço de Usuários offline ou inacessível.")
 
     total_price = 0.0
     items_to_save = []
@@ -110,7 +110,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
     except requests.HTTPError as e:
         raise HTTPException(status_code=e.response.status_code, detail=f"Catalog error: {e.response.text}")
     except requests.RequestException:
-        raise HTTPException(status_code=500, detail="Error communicating with Catalog Service")
+        raise HTTPException(status_code=500, detail="Não foi possível validar o produto. Serviço de Catálogo offline ou inacessível.")
 
     # 4. Persiste o Pedido
     db_order = models.Order(user_id=order.user_id, total_price=total_price)
@@ -135,14 +135,14 @@ def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 def get_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
     return order
 
 @app.patch("/orders/{order_id}/status", response_model=schemas.OrderResponse)
 def update_order_status(order_id: int, status_update: schemas.OrderUpdateStatus, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
     order.status = status_update.status
     db.commit()
     db.refresh(order)

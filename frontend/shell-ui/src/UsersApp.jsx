@@ -19,7 +19,7 @@ function UsersApp() {
       setFeedback({ type: '', message: '' });
     } catch (err) {
       console.error(err);
-      setFeedback({ type: 'error', message: '⚠️ Serviço de Usuários offline ou inacessível.' });
+      setFeedback({ type: 'error', message: 'Serviço de Usuários offline ou inacessível.' });
     }
   };
 

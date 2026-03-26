@@ -63,7 +63,7 @@ function OrdersApp() {
       return sortedData;
     } catch (e) {
       console.error(e);
-      setFeedback({ type: "error", message: "⚠️ Serviço de Catálogo offline ou inacessível." });
+      setFeedback({ type: "error", message: "Serviço de Catálogo offline ou inacessível." });
       return [];
     }
   };
