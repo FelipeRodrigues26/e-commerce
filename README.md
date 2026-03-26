@@ -15,42 +15,60 @@ Este é um projeto de MVP para a plataforma interna de gestão de pedidos de uma
    docker-compose up --build
    ```
 3. Acesse a aplicação no seu navegador:
-   - **Frontend (Shell com o MFE de Pedidos integrado)**: [http://localhost:3000](http://localhost:3000)
-   - **MFE de Pedidos (Remoto Isolado)**: [http://localhost:3001](http://localhost:3001)
+   - **Shell UI (Host Principal)**: [http://localhost:3000](http://localhost:3000)
 4. Acesse a documentação nativa das APIs (Swagger):
    - **Users Service**: [http://localhost:8001/docs](http://localhost:8001/docs)
    - **Orders Service**: [http://localhost:8002/docs](http://localhost:8002/docs)
+   - **Catalog Service**: [http://localhost:8003/docs](http://localhost:8003/docs)
 
-*(Nota: Na primeira execução o banco de dados e as builds Node do Vite podem levar alguns minutos para ficarem prontas)*
+## 🏗️ Arquitetura Final
 
-## 🏗️ Arquitetura
+O projeto utiliza uma malha de **3 microsserviços** e **3 microfrontends** independentes:
 
-O projeto foi construído utilizando:
-- **Backend**: FastAPI para performance, concorrência nativa (async) e geração automática de documentação OpenAPI (Swagger).
-- **Frontend**: React + Vite, configurados com `@originjs/vite-plugin-federation` para uso de Microfrontends fáceis e leves, usando SPAs modernas.
-- **Banco de Dados**: PostgreSQL configurado com bases relacionais lógicas (`users_db` e `orders_db`) para garantir a persistência isolada por microsserviço.
-- **Infraestrutura**: Docker Compose orquestrando Serviços de API, Frontends e Banco de Dados.
+- **Backend (FastAPI)**:
+    - **Users Service**: Responsável por autenticação JWT e gestão de usuários.
+    - **Catalog Service**: Gere o catálogo de produtos e inventário, utilizando **Redis** para cache de alta performance.
+    - **Orders Service**: Orquestra pedidos no modelo **Mestre/Detalhe**, validando estoque síncronamente com o catálogo.
+- **Frontend (React/Vite)**: 
+    - **Shell (Porta 3000)**: Host que integra os MFEs via Module Federation.
+    - **Orders UI (Porta 3001)**: Sistema de carrinho, listagem e busca por ID.
+    - **Catalog UI (Porta 3003)**: Gestão de produtos e visibilidade de estoque.
+- **Persistência**: PostgreSQL com 3 bancos de dados lógicos isolados (`users_db`, `catalog_db`, `orders_db`).
+- **Cache**: Redis (Cache-Aside Pattern) implementado no serviço de Catálogo.
 
-### Diagrama de Serviços
+### Diagrama de Comunicação
 
 ```mermaid
 graph TD
-    Client[Browser Cliente] -- Acessa --> ShellMFE[Shell UI - Porta 3000]
-    ShellMFE -- Carrega via Module Federation --> OrdersMFE[Orders UI - Porta 3001]
-    OrdersMFE -- Requisições HTTP (CORS) --> OrdersService[Orders Service - Porta 8002]
-    OrdersService -- Requisições HTTP Internas --> UsersService[Users Service - Porta 8001]
+    Client[Browser] -- 3000 --> Shell[Shell UI]
+    Shell -- Module Fed --> OrdersMFE[Orders UI]
+    Shell -- Module Fed --> CatalogMFE[Catalog UI]
     
-    OrdersService -.- OrdersDB[(PostgreSQL - orders_db)]
-    UsersService -.- UsersDB[(PostgreSQL - users_db)]
+    OrdersMFE -- JWT --> OrdersSvc[Orders Service]
+    CatalogMFE -- JWT --> CatalogSvc[Catalog Service]
+    
+    OrdersSvc -- HTTP + Token --> CatalogSvc
+    OrdersSvc -- HTTP + Token --> UsersSvc[Users Service]
+    
+    CatalogSvc -- GET/SET --> Redis[(Redis Cache)]
+    
+    OrdersSvc --- OrdDB[(Orders DB)]
+    CatalogSvc --- CatDB[(Catalog DB)]
+    UsersSvc --- UsrDB[(Users DB)]
 ```
 
-## 🧠 Decisões Técnicas
-- **FastAPI vs Django REST**: A escolha foi pelo FastAPI por conta da flexibilidade para APIs modernas baseadas em async/await, pydantic out-of-the-box e documentação automática integrada ao framework, que nos poupa um tempo valioso na estruturação de documentação e serialização de dados.
-- **Microfrontends com Vite**: Utilizamos o `vite-plugin-federation` por ser mais moderno, rápido para build (esbuild/rollup) e com menor complexidade de boilerplate do que o Webpack Module Federation clássico, além de facilitar a criação de builds desacopladas.
-- **Isolamento de Banco**: Cada microsserviço se comunica com seu banco sem acessar o banco de outros (`database per service pattern`). No entanto, optamos por utilizar um mesmo servidor PostgreSQL principal para as bases do MVP (e não criar 2 conteineres distintos) mantendo o menor footprint no ambiente local enquanto preserva o isolamento lógico das aplicações.
+## 🧠 Decisões Técnicas e Diferenciais
+
+- **Arquitetura Master/Detail**: Essencial para e-commerce, permitindo que um único pedido contenha múltiplos produtos com quantidades variadas.
+- **Persistência de Preço Histórico**: O preço unitário do produto é capturado e persistido no `OrderItem` no momento da criação do pedido. Isso garante a integridade financeira mesmo que o preço do produto mude no catálogo futuramente.
+- **Controle de Estoque Atômico**: A validação e baixa de estoque ocorrem de forma síncrona durante a criação do pedido. Se o catálogo retornar erro de estoque insuficiente, a transação do pedido é interrompida.
+- **Segurança (JWT Propagation)**: Tokens JWT são validados em cada microsserviço e propagados nas chamadas inter-serviços, garantindo que a identidade do usuário seja mantida em toda a cadeia.
+- **Estratégia de Cache**: O uso de Redis no Catálogo reduz drasticamente a latência de leitura, com invalidação automática em qualquer operação de escrita (POST/PATCH/DELETE).
 
 ## ⏱️ O que ficaria diferente com mais tempo?
-- **Mensageria assíncrona ("Bônus")**: Comunicação entre o `orders-service` e o `users-service` ocorrendo utilizando RabbitMQ ou Kafka, para garantir que os demais serviços continuem imunes à indisponibilidade e lentidão temporária.
-- **Autenticação Avançada (Desejável)**: Uma implementação real da camada de JWT exposta no `users-service`, validando e repassando credenciais nos proxies ou microfrontends (via API Gateway).
-- **Camadas Complementares (Desejável)**: Utilização do Redis para cachear retornos rápidos do serviço de usuários e aliviar as requisições ao banco.
-- **CI/CD pipeline (Desejável)**: Scripts Github Actions rodando formatadores, linters (black/flake8 para Python e Eslint para JS) e rodando baterias de testes via pytest e vitest/JEST.
+
+- **Mensageria Assíncrona**: Utilização de RabbitMQ ou Kafka para processar notificações e integração com logística após a confirmação do pedido.
+- **Observabilidade**: Adição de Prometheus/Grafana para métricas e Jaeger para rastreamento distribuído (tracing).
+- **IA Generativa**: Integração com LLMs para sugerir prioridades de despacho ou prever demanda de estoque baseada no histórico.
+- **CI/CD**: Expansão do pipeline de CI para deploy automático em ambientes de staging.
+
