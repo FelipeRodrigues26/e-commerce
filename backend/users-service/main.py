@@ -22,7 +22,12 @@ def seed_users():
     db = SessionLocal()
     try:
         if db.query(models.User).count() == 0:
-            db.add(models.User(username="admin", email="admin@ecommerce.com", hashed_password=get_password_hash("admin")))
+            db.add(models.User(
+                username="admin", 
+                name="Administrador",
+                email="admin@ecommerce.com", 
+                hashed_password=get_password_hash("admin")
+            ))
             db.commit()
     finally:
         db.close()
@@ -62,7 +67,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username, "name": user.name})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/users/", response_model=schemas.UserResponse)
@@ -72,7 +77,12 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email or Username already registered")
     
     hashed_password = get_password_hash(user.password)
-    new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password)
+    new_user = models.User(
+        username=user.username, 
+        name=user.name,
+        email=user.email, 
+        hashed_password=hashed_password
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

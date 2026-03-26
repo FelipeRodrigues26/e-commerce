@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 function UsersApp() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', name: '', email: '', password: '' });
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ function UsersApp() {
         body: JSON.stringify(form)
       });
       if (res.ok) {
-        setForm({ username: '', email: '', password: '' });
+        setForm({ username: '', name: '', email: '', password: '' });
         fetchUsers();
         alert('Usuário criado com sucesso!');
       } else {
@@ -51,6 +51,7 @@ function UsersApp() {
         <h3 style={{ marginTop: 0 }}>Novo Usuário</h3>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <input placeholder="Username" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required />
+          <input placeholder="Nome Completo" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc', flex: 1 }} value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
           <input placeholder="Email" type="email" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
           <input placeholder="Senha" type="password" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
           <button type="submit" style={{ padding: '0.5rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Cadastrar</button>
@@ -63,6 +64,7 @@ function UsersApp() {
         <thead style={{ background: '#eee' }}>
           <tr>
             <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>ID</th>
+            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Nome</th>
             <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Username</th>
             <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Email</th>
             <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Status</th>
@@ -72,6 +74,7 @@ function UsersApp() {
           {users.map(u => (
             <tr key={u.id}>
               <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.id}</td>
+              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.name}</td>
               <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.username}</td>
               <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.email}</td>
               <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.is_active ? '✅ Ativo' : '❌ Inativo'}</td>

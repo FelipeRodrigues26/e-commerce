@@ -1,9 +1,18 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 
 import UsersApp from './UsersApp';
 
 const OrdersApp = React.lazy(() => import('orders_ui/OrdersApp'));
 const CatalogApp = React.lazy(() => import('catalog_ui/CatalogApp'));
+
+const decodeToken = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload;
+  } catch (e) {
+    return null;
+  }
+};
 
 function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('admin');
@@ -50,7 +59,15 @@ function LoginForm({ onLogin }) {
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('jwt_token'));
+  const [userName, setUserName] = useState('');
   const [view, setView] = useState('pedidos');
+
+  useEffect(() => {
+    if (token) {
+      const decoded = decodeToken(token);
+      if (decoded && decoded.name) setUserName(decoded.name);
+    }
+  }, [token]);
 
   const handleLogin = (jwt) => {
     localStorage.setItem('jwt_token', jwt);
@@ -60,6 +77,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('jwt_token');
     setToken(null);
+    setUserName('');
   };
 
   if (!token) {
@@ -89,7 +107,10 @@ function App() {
             </button>
           </nav>
         </div>
-        <button onClick={handleLogout} style={{background: 'transparent', border: '1px solid white', color: 'white', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: 4}}>Sair</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          {userName && <span style={{ fontSize: '0.9rem', color: '#ccc' }}>👤 Olá, <strong style={{color: 'white'}}>{userName}</strong></span>}
+          <button onClick={handleLogout} style={{background: 'transparent', border: '1px solid white', color: 'white', padding: '0.4rem 1rem', cursor: 'pointer', borderRadius: 4}}>Sair</button>
+        </div>
       </header>
       <main style={{ padding: '2rem' }}>
         {view === 'pedidos' ? (
