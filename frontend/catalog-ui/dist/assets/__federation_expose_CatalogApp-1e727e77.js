@@ -30,14 +30,22 @@ const API_URL = "http://localhost:8003/catalog";
 function CatalogApp() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ name: "", price: 0, description: "", stock: 0 });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
   const fetchCatalog = async () => {
     try {
-      const res = await fetch(API_URL + "/");
+      const res = await fetch(`${API_URL}/?t=${Date.now()}`, {
+        headers: { "Cache-Control": "no-cache" }
+      });
+      if (!res.ok)
+        throw new Error("Service down");
       const data = await res.json();
       const sortedData = Array.isArray(data) ? data.sort((a, b) => a.id - b.id) : [];
       setItems(sortedData);
     } catch (e) {
       console.error(e);
+      setFeedback({ type: "error", message: "⚠️ Serviço de Catálogo offline ou inacessível." });
     }
   };
   useEffect(() => {
@@ -59,6 +67,35 @@ function CatalogApp() {
       alert("Erro ao criar item.");
     }
   };
+  const startEdit = (p) => {
+    setForm({ name: p.name, price: p.price, description: p.description || "", stock: p.stock });
+    setIsEditing(true);
+    setEditingId(p.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const cancelEdit = () => {
+    setForm({ name: "", price: 0, description: "", stock: 0 });
+    setIsEditing(false);
+    setEditingId(null);
+  };
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) {
+        cancelEdit();
+        fetchCatalog();
+      } else {
+        alert("Erro ao atualizar o item.");
+      }
+    } catch (e2) {
+      alert("Erro de conexão.");
+    }
+  };
   const handleDelete = async (id) => {
     if (!confirm("Deseja excluir este item?"))
       return;
@@ -74,14 +111,14 @@ function CatalogApp() {
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "#f9f9f9", padding: "1.5rem", borderRadius: 8, marginBottom: "2rem", border: "1px solid #ddd" }, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "🛍️ Novo Item no Catálogo" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCreate, style: { display: "flex", gap: "1rem", flexWrap: "wrap" }, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: isEditing ? "#fffbeb" : "#f9f9f9", padding: "1.5rem", borderRadius: 8, marginBottom: "2rem", border: isEditing ? "1px solid #fde68a" : "1px solid #ddd", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0, color: isEditing ? "#92400e" : "#111827" }, children: isEditing ? `📝 Editando Produto ${editingId}` : "🛍️ Novo Item no Catálogo" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: isEditing ? handleUpdate : handleCreate, style: { display: "flex", gap: "1rem", flexWrap: "wrap" }, children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           "input",
           {
             placeholder: "Nome do Produto",
-            style: { padding: "0.5rem", borderRadius: 4, border: "1px solid #ccc", flex: 1 },
+            style: { padding: "0.6rem", borderRadius: 6, border: "1px solid #d1d5db", flex: 1 },
             value: form.name,
             onChange: (e) => setForm({ ...form, name: e.target.value }),
             required: true
@@ -92,7 +129,7 @@ function CatalogApp() {
           {
             type: "number",
             placeholder: "Preço",
-            style: { padding: "0.5rem", width: 100, borderRadius: 4, border: "1px solid #ccc" },
+            style: { padding: "0.6rem", width: 120, borderRadius: 6, border: "1px solid #d1d5db" },
             value: form.price,
             onChange: (e) => setForm({ ...form, price: parseFloat(e.target.value) }),
             min: "0",
@@ -104,7 +141,7 @@ function CatalogApp() {
           "input",
           {
             placeholder: "Descrição",
-            style: { padding: "0.5rem", borderRadius: 4, border: "1px solid #ccc", flex: 2 },
+            style: { padding: "0.6rem", borderRadius: 6, border: "1px solid #d1d5db", flex: 2 },
             value: form.description,
             onChange: (e) => setForm({ ...form, description: e.target.value })
           }
@@ -114,14 +151,17 @@ function CatalogApp() {
           {
             type: "number",
             placeholder: "Estoque",
-            style: { padding: "0.5rem", width: 80, borderRadius: 4, border: "1px solid #ccc" },
+            style: { padding: "0.6rem", width: 90, borderRadius: 6, border: "1px solid #d1d5db" },
             value: form.stock,
             onChange: (e) => setForm({ ...form, stock: parseInt(e.target.value) }),
             min: "0",
             required: true
           }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: { padding: "0.6rem 1.5rem", background: "#28a745", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }, children: "Adicionar" })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: "0.5rem" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: { padding: "0.6rem 1.5rem", background: isEditing ? "#f59e0b" : "#28a745", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }, children: isEditing ? "Salvar Alterações" : "Adicionar" }),
+          isEditing && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: cancelEdit, style: { padding: "0.6rem 1.5rem", background: "#9ca3af", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }, children: "Cancelar" })
+        ] })
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "Itens Disponíveis" }),
@@ -143,14 +183,24 @@ function CatalogApp() {
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "13px", background: "white", color: "#64748b" }, children: p.description }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold" }, children: p.stock }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", background: "white" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            onClick: () => handleDelete(p.id),
-            style: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
-            children: "🗑️ Excluir"
-          }
-        ) })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", background: "white", display: "flex", gap: "0.5rem" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              onClick: () => startEdit(p),
+              style: { background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
+              children: "📝 Editar"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              onClick: () => handleDelete(p.id),
+              style: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
+              children: "🗑️ Excluir"
+            }
+          )
+        ] })
       ] }, p.id)) })
     ] })
   ] });

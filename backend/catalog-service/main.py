@@ -98,6 +98,27 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
         pass
     return {"detail": "Product deleted"}
 
+@app.patch("/catalog/{product_id}", response_model=schemas.ProductResponse)
+def update_product(product_id: int, product_update: schemas.ProductUpdate, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    update_data = product_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(product, key, value)
+    
+    db.commit()
+    db.refresh(product)
+    
+    # Invalida o cache
+    try:
+        redis_client.delete("catalog")
+    except redis.RedisError:
+        pass
+        
+    return product
+
 @app.patch("/catalog/{product_id}/stock", response_model=schemas.ProductResponse)
 def update_stock(product_id: int, stock_update: schemas.ProductStockUpdate, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()

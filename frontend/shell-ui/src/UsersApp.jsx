@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function UsersApp() {
   const [users, setUsers] = useState([]);
-  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
   const [form, setForm] = useState({ username: '', name: '', email: '', password: '' });
 
   const getHeaders = () => ({
@@ -13,10 +13,13 @@ function UsersApp() {
   const fetchUsers = async () => {
     try {
       const res = await fetch('http://localhost:8001/users/', { headers: getHeaders() });
+      if (!res.ok) throw new Error("Service down");
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
+      setFeedback({ type: '', message: '' });
     } catch (err) {
-      setError('Erro ao carregar usuários.');
+      console.error(err);
+      setFeedback({ type: 'error', message: '⚠️ Serviço de Usuários offline ou inacessível.' });
     }
   };
 
@@ -35,20 +38,32 @@ function UsersApp() {
       if (res.ok) {
         setForm({ username: '', name: '', email: '', password: '' });
         fetchUsers();
-        alert('Usuário criado com sucesso!');
+        setFeedback({ type: 'success', message: 'Usuário criado com sucesso! ✅' });
       } else {
         const errData = await res.json();
-        alert(errData.detail || 'Erro ao criar usuário.');
+        setFeedback({ type: 'error', message: errData.detail || 'Erro ao criar usuário.' });
       }
     } catch (err) {
-      alert('Erro de conexão.');
+      setFeedback({ type: 'error', message: 'Erro de conexão ou serviço offline.' });
     }
   };
 
   return (
-    <div>
+    <div style={{ padding: '1rem' }}>
+      {feedback.message && (
+        <div style={{ 
+          background: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2', 
+          border: feedback.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', 
+          color: feedback.type === 'success' ? '#15803d' : '#b91c1c', 
+          padding: '1rem', borderRadius: 8, marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', fontWeight: '500', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}>
+          <span>{feedback.type === 'success' ? '✅' : '⚠️'} {feedback.message}</span>
+          <button onClick={() => setFeedback({ type: '', message: '' })} style={{ background: 'none', border: 'none', color: feedback.type === 'success' ? '#15803d' : '#b91c1c', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}>×</button>
+        </div>
+      )}
+
       <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem', border: '1px solid #ddd' }}>
-        <h3 style={{ marginTop: 0 }}>Novo Usuário</h3>
+        <h3 style={{ marginTop: 0 }}>👤 Novo Usuário</h3>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <input placeholder="Username" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required />
           <input placeholder="Nome Completo" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc', flex: 1 }} value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
@@ -59,7 +74,6 @@ function UsersApp() {
       </div>
 
       <h3>Lista de Usuários</h3>
-      {error && <p style={{color: 'red'}}>{error}</p>}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <thead>
           <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>

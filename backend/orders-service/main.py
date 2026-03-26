@@ -83,7 +83,14 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
             
             product = catalog[item.product_id]
             if product["stock"] < item.quantity:
-                raise HTTPException(status_code=400, detail=f"Insufficient stock for {product['name']}")
+                raise HTTPException(status_code=400, detail=f"Estoque insuficiente para {product['name']}")
+
+            # Validação de Preço: Se o preço mudou enquanto o item estava no carrinho
+            if abs(product["price"] - item.price) > 0.01:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"O preço do item '{product['name']}' mudou de R${item.price} para R${product['price']}. Por favor, revise seu carrinho."
+                )
 
             # 3. Baixa o Estoque (Propagação de Token)
             stock_res = requests.patch(

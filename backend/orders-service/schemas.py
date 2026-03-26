@@ -7,7 +7,7 @@ class OrderItemBase(BaseModel):
     quantity: int
 
 class OrderItemCreate(OrderItemBase):
-    pass
+    price: float
 
 class OrderItemResponse(OrderItemBase):
     id: int

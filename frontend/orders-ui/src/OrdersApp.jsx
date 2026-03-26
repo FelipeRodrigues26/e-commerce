@@ -12,6 +12,7 @@ function OrdersApp() {
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [expandedOrders, setExpandedOrders] = useState({});
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -21,23 +22,27 @@ function OrdersApp() {
   const fetchOrders = async () => {
     try {
       const res = await fetch(API_URL + '/', { headers: getHeaders() });
+      if (!res.ok) throw new Error("Service error");
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
+      setFeedback({ type: 'error', message: '⚠️ Serviço de Pedidos offline ou inacessível.' });
     }
   };
 
   const fetchCatalog = async () => {
     try {
       const res = await fetch('http://localhost:8003/catalog/', { headers: getHeaders() });
+      if (!res.ok) throw new Error("Service error");
       const data = await res.json();
-      setCatalog(Array.isArray(data) ? data : []);
-      if (data.length > 0) {
-        setSelectedProductId(data[0].id);
-      }
+      const sortedData = Array.isArray(data) ? data : [];
+      setCatalog(sortedData);
+      return sortedData;
     } catch (e) {
       console.error(e);
+      setFeedback({ type: 'error', message: '⚠️ Serviço de Catálogo offline ou inacessível.' });
+      return [];
     }
   };
 
@@ -48,12 +53,13 @@ function OrdersApp() {
       if (res.ok) {
         const data = await res.json();
         setSearchResult(data);
+        setFeedback({ type: '', message: '' });
       } else {
-        alert('Pedido não encontrado.');
+        setFeedback({ type: 'error', message: 'Pedido não encontrado.' });
         setSearchResult(null);
       }
     } catch (e) {
-      alert('Erro na busca.');
+      setFeedback({ type: 'error', message: 'Erro na busca.' });
     }
   };
 
@@ -66,7 +72,7 @@ function OrdersApp() {
     const product = catalog.find(p => p.id === parseInt(selectedProductId));
     if (!product) return;
     if (product.stock < quantity) {
-        alert(`Estoque insuficiente! Apenas ${product.stock} disponíveis.`);
+        setFeedback({ type: 'error', message: `Estoque insuficiente! Apenas ${product.stock} disponíveis.` });
         return;
     }
     const newItem = { product_id: product.id, name: product.name, quantity, price: product.price };
@@ -77,13 +83,18 @@ function OrdersApp() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (cart.length === 0) {
-        alert("Adicione pelo menos um item ao carrinho!");
+        setFeedback({ type: 'error', message: "Adicione pelo menos um item ao carrinho!" });
         return;
     }
     const payload = {
         user_id: 1, // MVP User
-        items: cart.map(item => ({ product_id: item.product_id, quantity: item.quantity }))
+        items: cart.map(item => ({ 
+            product_id: Number(item.product_id), 
+            quantity: Number(item.quantity),
+            price: Number(item.price)
+        }))
     };
+    console.log("Enviando Pedido:", payload);
 
     const res = await fetch(API_URL + '/', {
       method: 'POST',
@@ -95,10 +106,34 @@ function OrdersApp() {
         fetchOrders();
         fetchCatalog(); 
         setCart([]);
-        alert("Pedido criado com sucesso!");
+        setFeedback({ type: 'success', message: 'Pedido criado com sucesso! ✅' });
     } else {
-        const error = await res.json();
-        alert(`Erro: ${error.detail}`);
+        const errorData = await res.json();
+        console.error("Erro 422/400 Detalhado:", errorData);
+        let msg = "Erro na validação do pedido.";
+        if (errorData.detail) {
+            msg = typeof errorData.detail === 'string' 
+                ? errorData.detail 
+                : (errorData.detail[0]?.msg ? `${errorData.detail[0].loc.join('.')}: ${errorData.detail[0].msg}` : JSON.stringify(errorData.detail));
+        }
+        setFeedback({ type: 'error', message: msg });
+        
+        // Sincroniza com as informações reais do servidor
+        const freshCatalog = await fetchCatalog();
+        
+        setCart(prevCart => 
+            prevCart
+                .filter(item => {
+                    const p = freshCatalog.find(prod => prod.id === item.product_id);
+                    // Remove do carrinho se não houver mais estoque
+                    return p && p.stock > 0;
+                })
+                .map(item => {
+                    const p = freshCatalog.find(prod => prod.id === item.product_id);
+                    // Atualiza o preço caso tenha mudado
+                    return { ...item, price: p ? p.price : item.price };
+                })
+        );
     }
   };
 
@@ -110,14 +145,15 @@ function OrdersApp() {
         body: JSON.stringify({ status })
       });
       if (res.ok) {
+        setFeedback({ type: 'success', message: 'Status atualizado com sucesso! ✅' });
         await fetchOrders();
       } else {
         const err = await res.json();
-        alert(`Erro ao atualizar status: ${err.detail || 'Erro desconhecido'}`);
+        setFeedback({ type: 'error', message: `Erro ao atualizar status: ${err.detail || 'Erro desconhecido'}` });
       }
     } catch (e) {
       console.error(e);
-      alert('Erro de conexão ao atualizar status.');
+      setFeedback({ type: 'error', message: 'Erro de conexão ao atualizar status.' });
     }
   };
 
@@ -133,6 +169,18 @@ function OrdersApp() {
       {/* Carrinho e Novo Pedido */}
       <div style={{ background: '#f9fafb', padding: '1.5rem', borderRadius: 12, marginBottom: '2rem', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <h3 style={{ marginTop: 0, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>🛒 Novo Pedido</h3>
+        
+        {feedback.message && (
+          <div style={{ 
+            background: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2', 
+            border: feedback.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', 
+            color: feedback.type === 'success' ? '#15803d' : '#b91c1c', 
+            padding: '1rem', borderRadius: 8, marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', fontWeight: '500' 
+          }}>
+            <span>{feedback.type === 'success' ? '✅' : '⚠️'} {feedback.message}</span>
+            <button onClick={() => setFeedback({ type: '', message: '' })} style={{ background: 'none', border: 'none', color: feedback.type === 'success' ? '#15803d' : '#b91c1c', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px' }}>×</button>
+          </div>
+        )}
         
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'flex-end' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
