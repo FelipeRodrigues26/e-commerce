@@ -30,7 +30,7 @@ def seed_catalog():
             
         # Redis Cache Seeding
         products = db.query(models.Product).all()
-        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
+        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description, "stock": p.stock} for p in products]
         redis_client.set("catalog", json.dumps(catalog))
     except Exception as e:
         print(f"Error seeding catalog: {e}")
@@ -64,7 +64,7 @@ def get_catalog(db: Session = Depends(get_db)):
     
     # 3. Update Redis cache if possible
     try:
-        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
+        catalog = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description, "stock": p.stock} for p in products]
         redis_client.set("catalog", json.dumps(catalog))
     except redis.RedisError:
         pass 
@@ -97,3 +97,25 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     except redis.RedisError:
         pass
     return {"detail": "Product deleted"}
+
+@app.patch("/catalog/{product_id}/stock", response_model=schemas.ProductResponse)
+def update_stock(product_id: int, stock_update: schemas.ProductStockUpdate, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Valida se o estoque ficaria negativo
+    if product.stock + stock_update.quantity_delta < 0:
+        raise HTTPException(status_code=400, detail="Insufficient stock")
+    
+    product.stock += stock_update.quantity_delta
+    db.commit()
+    db.refresh(product)
+    
+    # Invalida o cache
+    try:
+        redis_client.delete("catalog")
+    except redis.RedisError:
+        pass
+        
+    return product

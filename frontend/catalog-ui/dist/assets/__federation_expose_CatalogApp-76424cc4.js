@@ -29,7 +29,7 @@ const {useState,useEffect} = React;
 const API_URL = "http://localhost:8003/catalog";
 function CatalogApp() {
   const [items, setItems] = useState([]);
-  const [form, setForm] = useState({ name: "", price: 0, description: "" });
+  const [form, setForm] = useState({ name: "", price: 0, description: "", stock: 0 });
   const fetchCatalog = async () => {
     try {
       const res = await fetch(API_URL + "/");
@@ -51,7 +51,7 @@ function CatalogApp() {
         body: JSON.stringify(form)
       });
       if (res.ok) {
-        setForm({ name: "", price: 0, description: "" });
+        setForm({ name: "", price: 0, description: "", stock: 0 });
         fetchCatalog();
       }
     } catch (e2) {
@@ -108,6 +108,18 @@ function CatalogApp() {
             onChange: (e) => setForm({ ...form, description: e.target.value })
           }
         ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "input",
+          {
+            type: "number",
+            placeholder: "Estoque",
+            style: { padding: "0.5rem", width: 80, borderRadius: 4, border: "1px solid #ccc" },
+            value: form.stock,
+            onChange: (e) => setForm({ ...form, stock: parseInt(e.target.value) }),
+            min: "0",
+            required: true
+          }
+        ),
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: { padding: "0.6rem 1.5rem", background: "#28a745", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: "bold" }, children: "Adicionar" })
       ] })
     ] }),
@@ -118,6 +130,7 @@ function CatalogApp() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Produto" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Preço" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Descrição" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Estoque" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Ações" })
       ] }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: items.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
@@ -128,6 +141,7 @@ function CatalogApp() {
           p.price.toFixed(2)
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd", fontSize: "0.9rem" }, children: p.description }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd", fontWeight: "bold" }, children: p.stock }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
           {

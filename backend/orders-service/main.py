@@ -28,13 +28,13 @@ def seed_db():
     db = SessionLocal()
     try:
         if db.query(models.Order).count() == 0:
-            db.add_all([
-                models.Order(user_id=1, product_name="Teclado Mecânico", quantity=1, status="PENDING"),
-                models.Order(user_id=2, product_name="Monitor 27 Polegadas", quantity=2, status="SHIPPED"),
-                models.Order(user_id=1, product_name="Mouse Gamer Sem Fio", quantity=1, status="DELIVERED"),
-                models.Order(user_id=3, product_name="Cadeira Ergonômica", quantity=1, status="PENDING"),
-                models.Order(user_id=2, product_name="Headset 7.1 Surround", quantity=1, status="SHIPPED")
-            ])
+            # Seed simplificado para o novo modelo
+            order1 = models.Order(user_id=1, status="PENDENTE", total_price=250.0)
+            db.add(order1)
+            db.commit()
+            db.refresh(order1)
+            
+            db.add(models.OrderItem(order_id=order1.id, product_id=1, quantity=1, unit_price=250.0))
             db.commit()
     finally:
         db.close()
@@ -52,18 +52,76 @@ app.add_middleware(
 )
 
 USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
+CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://catalog-service:8000")
 
 @app.post("/orders/", response_model=schemas.OrderResponse)
-def create_order(order: schemas.OrderCreate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_order = models.Order(**order.model_dump())
+def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme), current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # 1. Valida Usuário no Users Service
+    try:
+        user_res = requests.get(f"{USERS_SERVICE_URL}/users/", headers=headers)
+        user_res.raise_for_status()
+        users = user_res.json()
+        if not any(u["id"] == order.user_id for u in users):
+            raise HTTPException(status_code=400, detail=f"User {order.user_id} not found")
+    except requests.RequestException:
+        raise HTTPException(status_code=500, detail="Error communicating with User Service")
+
+    total_price = 0.0
+    items_to_save = []
+
+    # 2. Valida Produtos e Estoque no Catalog Service
+    try:
+        cat_res = requests.get(f"{CATALOG_SERVICE_URL}/catalog/", headers=headers)
+        cat_res.raise_for_status()
+        catalog = {p["id"]: p for p in cat_res.json()}
+
+        for item in order.items:
+            if item.product_id not in catalog:
+                raise HTTPException(status_code=400, detail=f"Product {item.product_id} not found")
+            
+            product = catalog[item.product_id]
+            if product["stock"] < item.quantity:
+                raise HTTPException(status_code=400, detail=f"Insufficient stock for {product['name']}")
+
+            # 3. Baixa o Estoque (Propagação de Token)
+            stock_res = requests.patch(
+                f"{CATALOG_SERVICE_URL}/catalog/{item.product_id}/stock",
+                json={"quantity_delta": -item.quantity},
+                headers=headers
+            )
+            stock_res.raise_for_status()
+
+            unit_price = product["price"]
+            total_price += unit_price * item.quantity
+            items_to_save.append(models.OrderItem(
+                product_id=item.product_id,
+                quantity=item.quantity,
+                unit_price=unit_price
+            ))
+    except requests.HTTPError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=f"Catalog error: {e.response.text}")
+    except requests.RequestException:
+        raise HTTPException(status_code=500, detail="Error communicating with Catalog Service")
+
+    # 4. Persiste o Pedido
+    db_order = models.Order(user_id=order.user_id, total_price=total_price)
     db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+
+    for oi in items_to_save:
+        oi.order_id = db_order.id
+        db.add(oi)
+    
     db.commit()
     db.refresh(db_order)
     return db_order
 
 @app.get("/orders/", response_model=list[schemas.OrderResponse])
 def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    orders = db.query(models.Order).order_by(models.Order.id).offset(skip).limit(limit).all()
+    orders = db.query(models.Order).order_by(models.Order.id.desc()).offset(skip).limit(limit).all()
     return orders
 
 @app.get("/orders/{order_id}", response_model=schemas.OrderResponse)

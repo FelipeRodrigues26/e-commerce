@@ -25,7 +25,8 @@ def seed():
         payload = {
             "name": name,
             "price": round(random.uniform(50, 5000), 2),
-            "description": f"Descrição detalhada para {name}. Um produto de alta qualidade para seu setup."
+            "description": f"Descrição detalhada para {name}. Um produto de alta qualidade para seu setup.",
+            "stock": random.randint(10, 100)
         }
         try:
             res = requests.post(API_URL, json=payload)

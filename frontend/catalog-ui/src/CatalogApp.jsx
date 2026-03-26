@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:8003/catalog';
 
 function CatalogApp() {
   const [items, setItems] = useState([]);
-  const [form, setForm] = useState({ name: '', price: 0, description: '' });
+  const [form, setForm] = useState({ name: '', price: 0, description: '', stock: 0 });
 
   const fetchCatalog = async () => {
     try {
@@ -29,7 +29,7 @@ function CatalogApp() {
         body: JSON.stringify(form)
       });
       if (res.ok) {
-        setForm({ name: '', price: 0, description: '' });
+        setForm({ name: '', price: 0, description: '', stock: 0 });
         fetchCatalog();
       }
     } catch (e) {
@@ -80,6 +80,15 @@ function CatalogApp() {
             value={form.description} 
             onChange={e => setForm({ ...form, description: e.target.value })}
           />
+          <input 
+            type="number" 
+            placeholder="Estoque"
+            style={{ padding: '0.5rem', width: 80, borderRadius: 4, border: '1px solid #ccc' }} 
+            value={form.stock} 
+            onChange={e => setForm({ ...form, stock: parseInt(e.target.value) })} 
+            min="0"
+            required
+          />
           <button style={{ padding: '0.6rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Adicionar</button>
         </form>
       </div>
@@ -92,6 +101,7 @@ function CatalogApp() {
             <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Produto</th>
             <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Preço</th>
             <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Descrição</th>
+            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Estoque</th>
             <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Ações</th>
           </tr>
         </thead>
@@ -102,6 +112,7 @@ function CatalogApp() {
               <td style={{padding: '0.7rem', border: '1px solid #ddd', fontWeight: 'bold'}}>{p.name}</td>
               <td style={{padding: '0.7rem', border: '1px solid #ddd'}}>R${p.price.toFixed(2)}</td>
               <td style={{padding: '0.7rem', border: '1px solid #ddd', fontSize: '0.9rem'}}>{p.description}</td>
+              <td style={{padding: '0.7rem', border: '1px solid #ddd', fontWeight: 'bold'}}>{p.stock}</td>
               <td style={{padding: '0.7rem', border: '1px solid #ddd'}}>
                 <button 
                   onClick={() => handleDelete(p.id)}

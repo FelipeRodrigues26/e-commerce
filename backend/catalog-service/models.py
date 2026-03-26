@@ -8,3 +8,4 @@ class Product(Base):
     name = Column(String, index=True)
     price = Column(Float)
     description = Column(String, index=True, nullable=True)
+    stock = Column(Integer, default=0) # Novo campo para controle de inventário
