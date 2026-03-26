@@ -8,8 +8,8 @@ export default defineConfig({
     federation({
       name: 'shell_ui',
       remotes: {
-        orders_ui: 'http://localhost:3001/remoteEntry.js',
-        catalog_ui: 'http://localhost:3003/remoteEntry.js',
+        orders_ui: 'http://localhost:3001/assets/remoteEntry.js',
+        catalog_ui: 'http://localhost:3003/assets/remoteEntry.js',
       },
       shared: ['react', 'react-dom']
     })
