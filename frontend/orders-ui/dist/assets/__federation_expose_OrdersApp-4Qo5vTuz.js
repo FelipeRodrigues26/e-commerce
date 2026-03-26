@@ -140,7 +140,7 @@ function OrdersApp() {
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "input",
             {
-              placeholder: "Buscar ID...",
+              placeholder: "Buscar ID",
               style: { padding: "0.4rem", border: "none", width: "100px", outline: "none" },
               value: searchId,
               onChange: (e) => setSearchId(e.target.value)
@@ -150,21 +150,29 @@ function OrdersApp() {
             "button",
             {
               onClick: fetchOrderById,
-              style: { padding: "0.4rem 0.8rem", background: "#333", color: "white", border: "none", cursor: "pointer" },
+              style: { padding: "0.4rem 0.8rem", color: "white", border: "none", cursor: "pointer" },
               children: "🔍"
             }
           )
         ] }),
-        searchResult && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: () => {
-          setSearchResult(null);
-          setSearchId("");
-        }, style: { background: "#dc3545", color: "white", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px" }, children: "Limpar" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("select", { value: filterStatus, onChange: (e) => setFilterStatus(e.target.value), style: { padding: "0.4rem", borderRadius: 4, border: "1px solid #ccc" }, children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Todos Status" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "PENDING", children: "PENDING" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "SHIPPED", children: "SHIPPED" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "DELIVERED", children: "DELIVERED" })
-        ] })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "PENDENTE", children: "PENDENTE" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ENVIADO", children: "ENVIADO" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ENTREGUE", children: "ENTREGUE" })
+        ] }),
+        (searchResult || filterStatus) && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            onClick: () => {
+              setSearchResult(null);
+              setSearchId("");
+              setFilterStatus("");
+            },
+            style: { background: "white", color: "#333", border: "1px solid #ccc", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "13px", fontWeight: "bold" },
+            children: "Limpar Filtros"
+          }
+        )
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", border: "1px solid #ddd" }, children: [
@@ -181,11 +189,11 @@ function OrdersApp() {
           /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: o.id }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: o.product_name }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: o.quantity }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { padding: "0.3rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "bold", background: o.status === "PENDING" ? "#ffd700" : o.status === "SHIPPED" ? "#87ceeb" : "#28a745", color: o.status === "DELIVERED" ? "white" : "black" }, children: o.status }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { padding: "0.3rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "bold", background: o.status === "PENDENTE" ? "#ffd700" : o.status === "ENVIADO" ? "#87ceeb" : "#28a745", color: o.status === "ENTREGUE" ? "white" : "black" }, children: o.status }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("select", { style: { padding: "0.3rem", borderRadius: 4 }, value: o.status, onChange: (e) => updateStatus(o.id, e.target.value), children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "PENDING", children: "Pendente" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "SHIPPED", children: "Enviado" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "DELIVERED", children: "Entregue" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "PENDENTE", children: "Pendente" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ENVIADO", children: "Enviado" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ENTREGUE", children: "Entregue" })
           ] }) })
         ] }, o.id))
       ] })

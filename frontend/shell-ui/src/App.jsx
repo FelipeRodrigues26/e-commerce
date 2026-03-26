@@ -72,14 +72,14 @@ function App() {
           <h1 style={{margin: 0, fontSize: '1.5rem'}}>E-commerce</h1>
           <nav style={{ display: 'flex', gap: '1rem' }}>
             <button 
-              onClick={() => setView('pedidos')} 
-              style={{ background: view === 'pedidos' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
-              📦 Pedidos
-            </button>
-            <button 
               onClick={() => setView('usuarios')} 
               style={{ background: view === 'usuarios' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
               👥 Usuários
+            </button>
+            <button 
+              onClick={() => setView('pedidos')} 
+              style={{ background: view === 'pedidos' ? '#555' : 'transparent', border: 'none', color: 'white', padding: '0.5rem 1rem', cursor: 'pointer', borderRadius: 4 }}>
+              📦 Pedidos
             </button>
           </nav>
         </div>

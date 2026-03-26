@@ -66,7 +66,7 @@ def test_get_order_not_found():
 def test_update_order_status():
     response = client.patch(
         "/orders/1/status",
-        json={"status": "Shipped"}
+        json={"status": "ENVIADO"}
     )
     assert response.status_code == 200
-    assert response.json()["status"] == "Shipped"
+    assert response.json()["status"] == "ENVIADO"
