@@ -103,12 +103,22 @@ function OrdersApp() {
   };
 
   const updateStatus = async (id, status) => {
-    await fetch(`${API_URL}/${id}/status`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify({ status })
-    });
-    fetchOrders();
+    try {
+      const res = await fetch(`${API_URL}/${id}/status`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        await fetchOrders();
+      } else {
+        const err = await res.json();
+        alert(`Erro ao atualizar status: ${err.detail || 'Erro desconhecido'}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro de conexão ao atualizar status.');
+    }
   };
 
   const toggleExpand = (id) => {
@@ -118,7 +128,7 @@ function OrdersApp() {
   const displayOrders = searchResult ? [searchResult] : (filterStatus ? orders.filter(o => o.status === filterStatus) : orders);
 
   return (
-    <div style={{ padding: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', fontFamily: 'Inter, sans-serif' }}>
+    <div>
       
       {/* Carrinho e Novo Pedido */}
       <div style={{ background: '#f9fafb', padding: '1.5rem', borderRadius: 12, marginBottom: '2rem', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -132,7 +142,7 @@ function OrdersApp() {
               value={selectedProductId} 
               onChange={e => setSelectedProductId(e.target.value)}
             >
-              <option value="">Selecione um produto</option>
+              <option value="" >Selecione um produto...</option>
               {catalog.map(p => (
                 <option key={p.id} value={p.id}>{p.name} - R${p.price} (Estoque: {p.stock})</option>
               ))}
@@ -151,9 +161,9 @@ function OrdersApp() {
           <button 
             type="button"
             onClick={addToCart}
-            style={{ padding: '0.6rem 1.2rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+            style={{ padding: '0.6rem 1.2rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
           >
-            ➕ Adicionar Item
+            Adicionar Item
           </button>
         </div>
 
@@ -194,7 +204,7 @@ function OrdersApp() {
               value={searchId} 
               onChange={e => setSearchId(e.target.value)} 
             />
-            <button onClick={fetchOrderById} style={{ padding: '0.5rem 0.8rem', background: '#6b7280', color: 'white', border: 'none', cursor: 'pointer' }}>🔍</button>
+            <button onClick={fetchOrderById} style={{ padding: '0.5rem 0.8rem', background: '#e6e7e9ff', color: 'white', border: 'none', cursor: 'pointer' }}>🔍</button>
           </div>
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{padding: '0.5rem', borderRadius: 6, border: '1px solid #d1d5db'}}>
             <option value="">Status: Todos</option>
@@ -208,7 +218,7 @@ function OrdersApp() {
         </div>
       </div>
 
-      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginTop: '1rem' }}>
         <thead>
           <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
             <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>ID</th>
@@ -225,7 +235,7 @@ function OrdersApp() {
           {displayOrders.map(o => (
             <React.Fragment key={o.id}>
               <tr style={{ borderBottom: '1px solid #f1f5f9', background: expandedOrders[o.id] ? '#f8fafc' : 'white' }}>
-                <td style={{padding: '1rem', fontSize: '14px'}}>#{o.id}</td>
+                <td style={{padding: '1rem', fontSize: '14px'}}>{o.id}</td>
                 <td style={{padding: '1rem', fontSize: '14px'}}>{new Date(o.created_at).toLocaleDateString('pt-BR')}</td>
                 <td style={{padding: '1rem', fontSize: '14px', fontWeight: 'bold', color: '#1e293b'}}>R${o.total_price ? o.total_price.toFixed(2) : '0.00'}</td>
                 <td style={{padding: '1rem'}}>
@@ -248,24 +258,24 @@ function OrdersApp() {
               {expandedOrders[o.id] && o.items && (
                 <tr style={{ background: '#f8fafc' }}>
                   <td colSpan="5" style={{ padding: '0 1rem 1rem 1rem' }}>
-                    <div style={{ background: 'white', padding: '1rem', borderRadius: 8, border: '1px solid #e2e8f0', marginLeft: '2rem' }}>
-                        <h5 style={{ margin: '0 0 0.8rem 0', color: '#64748b' }}>Itens do Pedido #{o.id}:</h5>
+                    <div style={{ background: 'white', padding: '1rem', borderRadius: 12, border: '1px solid #e2e8f0', marginLeft: '2rem', marginBottom: '1rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                        <h5 style={{ margin: '0 0 1rem 0', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>📦 Itens do Pedido {o.id}:</h5>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #f1f5f9', color: '#94a3b8', textAlign: 'left' }}>
-                                    <th style={{ paddingBottom: '0.5rem' }}>Produto ID</th>
-                                    <th style={{ paddingBottom: '0.5rem' }}>Qtd</th>
-                                    <th style={{ paddingBottom: '0.5rem' }}>Prc. Unit (Histórico)</th>
-                                    <th style={{ paddingBottom: '0.5rem' }}>Subtotal</th>
+                                <tr style={{ borderBottom: '2px solid #f1f5f9', color: '#475569', textAlign: 'left', background: '#f8fafc' }}>
+                                    <th style={{ padding: '0.8rem' }}>ID Produto</th>
+                                    <th style={{ padding: '0.8rem' }}>Quantidade</th>
+                                    <th style={{ padding: '0.8rem' }}>Preço Unit. (Histórico)</th>
+                                    <th style={{ padding: '0.8rem' }}>Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {o.items.map(item => (
                                     <tr key={item.id} style={{ borderBottom: '1px solid #f8fafc' }}>
-                                        <td style={{ padding: '0.5rem 0' }}>{item.product_id}</td>
-                                        <td style={{ padding: '0.5rem 0' }}>{item.quantity}</td>
-                                        <td style={{ padding: '0.5rem 0' }}>R${item.unit_price.toFixed(2)}</td>
-                                        <td style={{ padding: '0.5rem 0', fontWeight: 'bold' }}>R${(item.unit_price * item.quantity).toFixed(2)}</td>
+                                        <td style={{ padding: '0.8rem' }}>{item.product_id}</td>
+                                        <td style={{ padding: '0.8rem' }}>{item.quantity}</td>
+                                        <td style={{ padding: '0.8rem' }}>R${item.unit_price.toFixed(2)}</td>
+                                        <td style={{ padding: '0.8rem', fontWeight: 'bold', color: '#0f172a' }}>R${(item.unit_price * item.quantity).toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>

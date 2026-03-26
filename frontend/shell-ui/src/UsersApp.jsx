@@ -60,24 +60,24 @@ function UsersApp() {
 
       <h3>Lista de Usuários</h3>
       {error && <p style={{color: 'red'}}>{error}</p>}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-        <thead style={{ background: '#eee' }}>
-          <tr>
-            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>ID</th>
-            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Nome</th>
-            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Username</th>
-            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Email</th>
-            <th style={{ padding: '0.7rem', border: '1px solid #ddd', textAlign: 'left' }}>Status</th>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <thead>
+          <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569', textAlign: 'left' }}>ID</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569', textAlign: 'left' }}>Nome</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569', textAlign: 'left' }}>Username</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569', textAlign: 'left' }}>Email</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569', textAlign: 'left' }}>Status</th>
           </tr>
         </thead>
         <tbody>
           {users.map(u => (
-            <tr key={u.id}>
-              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.id}</td>
-              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.name}</td>
-              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.username}</td>
-              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.email}</td>
-              <td style={{ padding: '0.7rem', border: '1px solid #ddd' }}>{u.is_active ? '✅ Ativo' : '❌ Inativo'}</td>
+            <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{u.id}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{u.name}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{u.username}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{u.email}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{u.is_active ? '✅ Ativo' : '❌ Inativo'}</td>
             </tr>
           ))}
         </tbody>

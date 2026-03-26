@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-e40783d0.js';
-import CatalogApp, { j as jsxRuntimeExports } from './__federation_expose_CatalogApp-76424cc4.js';
+import CatalogApp, { j as jsxRuntimeExports } from './__federation_expose_CatalogApp-92c5d5d8.js';
 import { r as reactDomExports } from './index-ebe3b9e0.js';
 
 var client = {};

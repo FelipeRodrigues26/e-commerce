@@ -10,7 +10,8 @@ function CatalogApp() {
     try {
       const res = await fetch(API_URL + '/');
       const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
+      const sortedData = Array.isArray(data) ? data.sort((a, b) => a.id - b.id) : [];
+      setItems(sortedData);
     } catch (e) {
       console.error(e);
     }
@@ -52,7 +53,7 @@ function CatalogApp() {
   };
 
   return (
-    <div style={{ padding: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white' }}>
+    <div>
       
       {/* Formulário de Criação */}
       <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem', border: '1px solid #ddd' }}>
@@ -94,29 +95,29 @@ function CatalogApp() {
       </div>
 
       <h3 style={{ marginTop: 0 }}>Itens Disponíveis</h3>
-      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
+      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginTop: '1rem' }}>
         <thead>
-          <tr style={{ background: '#eee' }}>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>ID</th>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Produto</th>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Preço</th>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Descrição</th>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Estoque</th>
-            <th style={{padding: '0.7rem', border: '1px solid #ddd'}}>Ações</th>
+          <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>ID</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>Produto</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>Preço</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>Descrição</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>Estoque</th>
+            <th style={{ padding: '1rem', fontWeight: '600', color: '#475569' }}>Ações</th>
           </tr>
         </thead>
         <tbody>
           {items.map(p => (
-            <tr key={p.id}>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd'}}>{p.id}</td>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd', fontWeight: 'bold'}}>{p.name}</td>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd'}}>R${p.price.toFixed(2)}</td>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd', fontSize: '0.9rem'}}>{p.description}</td>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd', fontWeight: 'bold'}}>{p.stock}</td>
-              <td style={{padding: '0.7rem', border: '1px solid #ddd'}}>
+            <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{p.id}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white', fontWeight: 'bold', color: '#1e293b' }}>{p.name}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>R${p.price.toFixed(2)}</td>
+              <td style={{ padding: '1rem', fontSize: '13px', background: 'white', color: '#64748b' }}>{p.description}</td>
+              <td style={{ padding: '1rem', fontSize: '14px', background: 'white', fontWeight: 'bold' }}>{p.stock}</td>
+              <td style={{ padding: '1rem', background: 'white' }}>
                 <button 
                   onClick={() => handleDelete(p.id)}
-                  style={{ background: '#dc3545', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer' }}>
+                  style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
                   🗑️ Excluir
                 </button>
               </td>

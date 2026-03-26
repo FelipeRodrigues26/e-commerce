@@ -34,7 +34,8 @@ function CatalogApp() {
     try {
       const res = await fetch(API_URL + "/");
       const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
+      const sortedData = Array.isArray(data) ? data.sort((a, b) => a.id - b.id) : [];
+      setItems(sortedData);
     } catch (e) {
       console.error(e);
     }
@@ -72,7 +73,7 @@ function CatalogApp() {
       alert("Erro de conexão.");
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "1.5rem", border: "1px solid #ddd", borderRadius: "8px", background: "white" }, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "#f9f9f9", padding: "1.5rem", borderRadius: 8, marginBottom: "2rem", border: "1px solid #ddd" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "🛍️ Novo Item no Catálogo" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCreate, style: { display: "flex", gap: "1rem", flexWrap: "wrap" }, children: [
@@ -124,29 +125,29 @@ function CatalogApp() {
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "Itens Disponíveis" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", border: "1px solid #ddd" }, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { background: "#eee" }, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "ID" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Produto" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Preço" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Descrição" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Estoque" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: "Ações" })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", marginTop: "1rem" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "ID" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Produto" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Preço" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Descrição" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Estoque" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Ações" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: items.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: p.id }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd", fontWeight: "bold" }, children: p.name }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: items.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9" }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: p.id }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold", color: "#1e293b" }, children: p.name }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: [
           "R$",
           p.price.toFixed(2)
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd", fontSize: "0.9rem" }, children: p.description }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd", fontWeight: "bold" }, children: p.stock }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.7rem", border: "1px solid #ddd" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "13px", background: "white", color: "#64748b" }, children: p.description }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold" }, children: p.stock }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", background: "white" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
           {
             onClick: () => handleDelete(p.id),
-            style: { background: "#dc3545", color: "white", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer" },
+            style: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
             children: "🗑️ Excluir"
           }
         ) })

@@ -119,18 +119,28 @@ function OrdersApp() {
     }
   };
   const updateStatus = async (id, status) => {
-    await fetch(`${API_URL}/${id}/status`, {
-      method: "PATCH",
-      headers: getHeaders(),
-      body: JSON.stringify({ status })
-    });
-    fetchOrders();
+    try {
+      const res = await fetch(`${API_URL}/${id}/status`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        await fetchOrders();
+      } else {
+        const err = await res.json();
+        alert(`Erro ao atualizar status: ${err.detail || "Erro desconhecido"}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erro de conexão ao atualizar status.");
+    }
   };
   const toggleExpand = (id) => {
     setExpandedOrders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
   const displayOrders = searchResult ? [searchResult] : filterStatus ? orders.filter((o) => o.status === filterStatus) : orders;
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "1.5rem", border: "1px solid #ddd", borderRadius: "8px", background: "white", fontFamily: "Inter, sans-serif" }, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "#f9fafb", padding: "1.5rem", borderRadius: 12, marginBottom: "2rem", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0, color: "#111827", display: "flex", alignItems: "center", gap: "8px" }, children: "🛒 Novo Pedido" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem", alignItems: "flex-end" }, children: [
@@ -143,7 +153,7 @@ function OrdersApp() {
               value: selectedProductId,
               onChange: (e) => setSelectedProductId(e.target.value),
               children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Selecione um produto" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", selected: true, children: "Selecione um produto..." }),
                 catalog.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: p.id, children: [
                   p.name,
                   " - R$",
@@ -174,8 +184,8 @@ function OrdersApp() {
           {
             type: "button",
             onClick: addToCart,
-            style: { padding: "0.6rem 1.2rem", background: "#3b82f6", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "600", fontSize: "14px" },
-            children: "➕ Adicionar Item"
+            style: { padding: "0.6rem 1.2rem", background: "#28a745", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "600", fontSize: "14px" },
+            children: "Adicionar Item"
           }
         )
       ] }),
@@ -223,7 +233,7 @@ function OrdersApp() {
               onChange: (e) => setSearchId(e.target.value)
             }
           ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: fetchOrderById, style: { padding: "0.5rem 0.8rem", background: "#6b7280", color: "white", border: "none", cursor: "pointer" }, children: "🔍" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { onClick: fetchOrderById, style: { padding: "0.5rem 0.8rem", background: "#e6e7e9ff", color: "white", border: "none", cursor: "pointer" }, children: "🔍" })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("select", { value: filterStatus, onChange: (e) => setFilterStatus(e.target.value), style: { padding: "0.5rem", borderRadius: 6, border: "1px solid #d1d5db" }, children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Status: Todos" }),
@@ -238,7 +248,7 @@ function OrdersApp() {
         }, style: { background: "white", color: "#374151", border: "1px solid #d1d5db", padding: "0.5rem 1rem", borderRadius: 6, fontWeight: "600", cursor: "pointer" }, children: "Limpar" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", marginTop: "1rem" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }, children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "ID" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Data" }),
@@ -250,10 +260,7 @@ function OrdersApp() {
         displayOrders.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "5", style: { padding: "3rem", textAlign: "center", color: "#94a3b8" }, children: "Nenhum pedido encontrado." }) }),
         displayOrders.map((o) => /* @__PURE__ */ jsxRuntimeExports.jsxs(React.Fragment, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9", background: expandedOrders[o.id] ? "#f8fafc" : "white" }, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", fontSize: "14px" }, children: [
-              "#",
-              o.id
-            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px" }, children: o.id }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px" }, children: new Date(o.created_at).toLocaleDateString("pt-BR") }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", fontSize: "14px", fontWeight: "bold", color: "#1e293b" }, children: [
               "R$",
@@ -276,27 +283,27 @@ function OrdersApp() {
               ] })
             ] })
           ] }),
-          expandedOrders[o.id] && o.items && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { style: { background: "#f8fafc" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "5", style: { padding: "0 1rem 1rem 1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "white", padding: "1rem", borderRadius: 8, border: "1px solid #e2e8f0", marginLeft: "2rem" }, children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("h5", { style: { margin: "0 0 0.8rem 0", color: "#64748b" }, children: [
-              "Itens do Pedido #",
+          expandedOrders[o.id] && o.items && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { style: { background: "#f8fafc" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "5", style: { padding: "0 1rem 1rem 1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "white", padding: "1rem", borderRadius: 12, border: "1px solid #e2e8f0", marginLeft: "2rem", marginBottom: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("h5", { style: { margin: "0 0 1rem 0", color: "#64748b", display: "flex", alignItems: "center", gap: "8px" }, children: [
+              "📦 Itens do Pedido ",
               o.id,
               ":"
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: "13px" }, children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9", color: "#94a3b8", textAlign: "left" }, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { paddingBottom: "0.5rem" }, children: "Produto ID" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { paddingBottom: "0.5rem" }, children: "Qtd" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { paddingBottom: "0.5rem" }, children: "Prc. Unit (Histórico)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { paddingBottom: "0.5rem" }, children: "Subtotal" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "2px solid #f1f5f9", color: "#475569", textAlign: "left", background: "#f8fafc" }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.8rem" }, children: "ID Produto" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.8rem" }, children: "Quantidade" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.8rem" }, children: "Preço Unit. (Histórico)" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "0.8rem" }, children: "Subtotal" })
               ] }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: o.items.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f8fafc" }, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.5rem 0" }, children: item.product_id }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.5rem 0" }, children: item.quantity }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "0.5rem 0" }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.8rem" }, children: item.product_id }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "0.8rem" }, children: item.quantity }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "0.8rem" }, children: [
                   "R$",
                   item.unit_price.toFixed(2)
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "0.5rem 0", fontWeight: "bold" }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "0.8rem", fontWeight: "bold", color: "#0f172a" }, children: [
                   "R$",
                   (item.unit_price * item.quantity).toFixed(2)
                 ] })
