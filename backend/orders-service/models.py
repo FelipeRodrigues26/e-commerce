@@ -9,5 +9,5 @@ class Order(Base):
     user_id = Column(Integer, index=True)
     product_name = Column(String, index=True)
     quantity = Column(Integer, default=1)
-    status = Column(String, default="PENDING")
+    status = Column(String, default="PENDENTE")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
