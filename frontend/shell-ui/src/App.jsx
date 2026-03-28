@@ -1,6 +1,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 
 import UsersApp from './UsersApp';
+import ErrorBoundary from './ErrorBoundary';
 
 const OrdersApp = React.lazy(() => import('orders_ui/OrdersApp'));
 const CatalogApp = React.lazy(() => import('catalog_ui/CatalogApp'));
@@ -45,11 +46,11 @@ function LoginForm({ onLogin }) {
        <form onSubmit={handleSubmit}>
          <div style={{marginBottom: '1rem'}}>
            <label style={{display: 'block', marginBottom: '0.3rem', fontSize: '14px', fontWeight: 'bold'}}>Usuário</label>
-           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} value={username} onChange={e=>setUsername(e.target.value)} required />
+           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} value={username} onChange={e=>setUsername(e.target.value)} required autoComplete="username" />
          </div>
          <div style={{marginBottom: '1.5rem'}}>
            <label style={{display: 'block', marginBottom: '0.3rem', fontSize: '14px', fontWeight: 'bold'}}>Senha</label>
-           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+           <input style={{width: '100%', padding: '0.5rem', boxSizing: 'border-box'}} type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" />
          </div>
          <button style={{width: '100%', padding: '0.8rem', background: '#333', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold'}}>Fazer Login</button>
        </form>
@@ -116,16 +117,20 @@ function App() {
         {view === 'pedidos' ? (
           <>
             <h2 style={{marginTop: 0}}>Painel de Pedidos</h2>
-            <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
-              <OrdersApp />
-            </Suspense>
+            <ErrorBoundary key="eb-pedidos">
+              <Suspense fallback={<div>Carregando Módulo de Pedidos...</div>}>
+                <OrdersApp />
+              </Suspense>
+            </ErrorBoundary>
           </>
         ) : view === 'catalog' ? (
           <>
             <h2 style={{marginTop: 0}}>Gestão de Catálogo</h2>
-            <Suspense fallback={<div>Carregando Catálogo...</div>}>
-              <CatalogApp />
-            </Suspense>
+            <ErrorBoundary key="eb-catalog">
+              <Suspense fallback={<div>Carregando Catálogo...</div>}>
+                <CatalogApp />
+              </Suspense>
+            </ErrorBoundary>
           </>
         ) : (
           <>

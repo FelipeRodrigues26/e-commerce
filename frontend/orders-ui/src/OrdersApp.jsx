@@ -27,7 +27,7 @@ function OrdersApp() {
       setOrders(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
-      setFeedback({ type: 'error', message: '⚠️ Serviço de Pedidos offline ou inacessível.' });
+      setFeedback({ type: 'error', message: 'Serviço de Pedidos offline ou inacessível.' });
     }
   };
 

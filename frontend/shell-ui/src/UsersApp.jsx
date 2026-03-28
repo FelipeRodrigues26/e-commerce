@@ -65,10 +65,10 @@ function UsersApp() {
       <div style={{ background: '#f9f9f9', padding: '1.5rem', borderRadius: 8, marginBottom: '2rem', border: '1px solid #ddd' }}>
         <h3 style={{ marginTop: 0 }}>👤 Novo Usuário</h3>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <input placeholder="Username" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required />
+          <input placeholder="Username" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required autoComplete="username" />
           <input placeholder="Nome Completo" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc', flex: 1 }} value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
           <input placeholder="Email" type="email" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
-          <input placeholder="Senha" type="password" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+          <input placeholder="Senha" type="password" style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #ccc' }} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required autoComplete="new-password" />
           <button type="submit" style={{ padding: '0.5rem 1.5rem', background: '#28a745', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 'bold' }}>Cadastrar</button>
         </form>
       </div>
