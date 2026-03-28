@@ -3,7 +3,7 @@ const currentImports = {};
       let moduleMap = {
 "./OrdersApp":()=>{
       dynamicLoadingCss([], false, './OrdersApp');
-      return __federation_import('./__federation_expose_OrdersApp-IxM3_oli.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      return __federation_import('./__federation_expose_OrdersApp-Cmau2eX6.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;

@@ -123,6 +123,8 @@ function OrdersApp() {
       fetchOrders();
       fetchCatalog();
       setCart([]);
+      setSelectedProductId("");
+      setQuantity(1);
       setFeedback({ type: "success", message: "Pedido criado com sucesso! ✅" });
     } else {
       const errorData = await res.json();

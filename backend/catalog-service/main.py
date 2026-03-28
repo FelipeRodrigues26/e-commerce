@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+import logging
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine, SessionLocal
@@ -6,6 +7,10 @@ import models, schemas
 import os
 import json
 import redis
+from observability import setup_logging, CorrelationIdMiddleware
+
+# Configura logs estruturados
+setup_logging()
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,6 +53,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CorrelationIdMiddleware)
 
 @app.get("/catalog/", response_model=list[schemas.ProductResponse])
 def get_catalog(db: Session = Depends(get_db)):
@@ -121,6 +127,7 @@ def update_product(product_id: int, product_update: schemas.ProductUpdate, db: S
 
 @app.patch("/catalog/{product_id}/stock", response_model=schemas.ProductResponse)
 def update_stock(product_id: int, stock_update: schemas.ProductStockUpdate, db: Session = Depends(get_db)):
+    logging.info(f"🏬 Atualizando estoque do produto {product_id}. Delta: {stock_update.quantity_delta}")
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")

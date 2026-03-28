@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+import logging
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine, SessionLocal
@@ -7,8 +8,12 @@ import os
 import requests
 import jwt
 from fastapi.security import OAuth2PasswordBearer
+from observability import setup_logging, CorrelationIdMiddleware, get_correlation_id
 
-SECRET_KEY = "my_super_secret_jwt_key"
+# Configura logs estruturados em JSON
+setup_logging()
+
+SECRET_KEY = os.getenv("JWT_SECRET", "351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2")
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://localhost:8001/login")
 
@@ -50,13 +55,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CorrelationIdMiddleware)
 
 USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
 CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://catalog-service:8000")
 
 @app.post("/orders/", response_model=schemas.OrderResponse)
 def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme), current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    headers = {"Authorization": f"Bearer {token}"}
+    logging.info(f"Carrinho recebido para processamento. Itens: {len(order.items)}")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "X-Correlation-ID": get_correlation_id()
+    }
     
     # 1. Valida Usuário no Users Service
     try:
@@ -73,6 +83,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
 
     # 2. Valida Produtos e Estoque no Catalog Service
     try:
+        logging.info("Validando estoque e preços no catálogo...")
         cat_res = requests.get(f"{CATALOG_SERVICE_URL}/catalog/", headers=headers)
         cat_res.raise_for_status()
         catalog = {p["id"]: p for p in cat_res.json()}
@@ -113,6 +124,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
         raise HTTPException(status_code=500, detail="Não foi possível validar o produto. Serviço de Catálogo offline ou inacessível.")
 
     # 4. Persiste o Pedido
+    logging.info("Persistindo pedido no banco de dados...")
     db_order = models.Order(user_id=order.user_id, total_price=total_price)
     db.add(db_order)
     db.commit()
@@ -144,6 +156,7 @@ def update_order_status(order_id: int, status_update: schemas.OrderUpdateStatus,
     if not order:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
     order.status = status_update.status
+    logging.info(f"Alterando status do pedido {order_id} para: {order.status}")
     db.commit()
     db.refresh(order)
     return order

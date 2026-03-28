@@ -25,6 +25,7 @@ services:
       - "8001:8000"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/users_db
+      - JWT_SECRET=351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2
     depends_on:
       db-server:
         condition: service_healthy
@@ -39,6 +40,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/orders_db
       - USERS_SERVICE_URL=http://users-service:8000
+      - JWT_SECRET=351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2
     depends_on:
       db-server:
         condition: service_healthy

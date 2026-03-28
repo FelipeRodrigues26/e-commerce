@@ -7,8 +7,13 @@ import models, schemas
 from passlib.context import CryptContext
 import jwt
 from datetime import datetime, timedelta
+import os
+from observability import setup_logging, CorrelationIdMiddleware
 
-SECRET_KEY = "my_super_secret_jwt_key"
+# Configura logs estruturados
+setup_logging()
+
+SECRET_KEY = os.getenv("JWT_SECRET", "351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -43,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(CorrelationIdMiddleware)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
