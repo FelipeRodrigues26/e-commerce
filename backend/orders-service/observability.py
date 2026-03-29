@@ -20,7 +20,7 @@ class JSONFormatter(logging.Formatter):
             "message": record.getMessage(),
             "module": record.module,
             "correlation_id": correlation_id_ctx.get(),
-            "user_id": user_id_ctx.get()
+            "user": user_id_ctx.get()
         }
         if record.exc_info:
             log_obj["exception"] = self.formatException(record.exc_info)

@@ -11,7 +11,7 @@ EXCHANGE = "order.events"
 ROUTING_KEY = "order.created"
 
 
-def publish_order_created(order_data: dict):
+def publish_order_created(order_data: dict, correlation_id: str):
     """
     Publica um evento de pedido criado na exchange do RabbitMQ.
     order_data deve conter: order_id, user_id, username, total_price, items

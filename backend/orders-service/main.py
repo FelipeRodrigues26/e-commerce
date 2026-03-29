@@ -12,6 +12,7 @@ import jwt
 from fastapi.security import OAuth2PasswordBearer
 from observability import setup_logging, CorrelationIdMiddleware, get_correlation_id
 from mq_publisher import publish_order_created
+import contextvars
 
 # Configura logs estruturados em JSON
 setup_logging()
@@ -74,11 +75,10 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
     
     # 1. Valida Usuário no Users Service
     try:
-        user_res = requests.get(f"{USERS_SERVICE_URL}/users/", headers=headers)
+        user_res = requests.get(f"{USERS_SERVICE_URL}/users/by-username/{current_user}",headers=headers)
         user_res.raise_for_status()
-        users = user_res.json()
-        if not any(u["id"] == order.user_id for u in users):
-            raise HTTPException(status_code=400, detail=f"User {order.user_id} not found")
+        user = user_res.json()
+        user_id = user["id"]
     except requests.RequestException:
         raise HTTPException(status_code=500, detail="Não foi possível validar o usuário. Serviço de Usuários offline ou inacessível.")
 
@@ -128,7 +128,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
 
         # 4. Persiste o Pedido
         logging.info("Persistindo pedido no banco de dados...")
-        db_order = models.Order(user_id=order.user_id, total_price=total_price)
+        db_order = models.Order(user_id=user_id, total_price=total_price)
         db.add(db_order)
         db.commit()
         db.refresh(db_order)
@@ -143,7 +143,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
         # 5. Publica evento assíncrono para o notification-service via RabbitMQ
         event_data = {
             "order_id": db_order.id,
-            "user_id": order.user_id,
+            "user_id": user_id,
             "username": current_user,
             "total_price": total_price,
             "items": [
@@ -157,9 +157,11 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
             ]
         }
         # Publica em thread separada para não bloquear a resposta ao cliente
+        correlation_id = get_correlation_id()
+        ctx = contextvars.copy_context()
+
         threading.Thread(
-            target=publish_order_created,
-            args=(event_data,),
+            target=lambda: ctx.run(publish_order_created, event_data, correlation_id),
             daemon=True
         ).start()
 
