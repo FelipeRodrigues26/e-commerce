@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from prometheus_fastapi_instrumentator import Instrumentator
 import logging
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -45,6 +46,7 @@ def seed_catalog():
 seed_catalog()
 
 app = FastAPI(title="Catalog Service", version="1.0.0")
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,

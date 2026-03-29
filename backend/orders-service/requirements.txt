@@ -8,3 +8,5 @@ requests
 pytest
 pytest-asyncio
 httpx
+prometheus-fastapi-instrumentator
+pika

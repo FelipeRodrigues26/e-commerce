@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
+from prometheus_fastapi_instrumentator import Instrumentator
 import logging
+import threading
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine, SessionLocal
@@ -9,6 +11,7 @@ import requests
 import jwt
 from fastapi.security import OAuth2PasswordBearer
 from observability import setup_logging, CorrelationIdMiddleware, get_correlation_id
+from mq_publisher import publish_order_created
 
 # Configura logs estruturados em JSON
 setup_logging()
@@ -47,6 +50,7 @@ def seed_db():
 seed_db()
 
 app = FastAPI(title="Orders Service", version="1.0.0")
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -80,6 +84,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
 
     total_price = 0.0
     items_to_save = []
+    items_reserved = [] # Rastreia itens que já tiveram estoque baixado
 
     # 2. Valida Produtos e Estoque no Catalog Service
     try:
@@ -103,13 +108,15 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
                     detail=f"O preço do item '{product['name']}' mudou de R${item.price} para R${product['price']}. Por favor, revise seu carrinho."
                 )
 
-            # 3. Baixa o Estoque (Propagação de Token)
+            # 3. Baixa o Estoque (Reserva temporária)
             stock_res = requests.patch(
                 f"{CATALOG_SERVICE_URL}/catalog/{item.product_id}/stock",
                 json={"quantity_delta": -item.quantity},
                 headers=headers
             )
             stock_res.raise_for_status()
+            # Se chegou aqui, o estoque foi baixado. Adicionamos à lista para possível rollback.
+            items_reserved.append(item)
 
             unit_price = product["price"]
             total_price += unit_price * item.quantity
@@ -118,25 +125,66 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
                 quantity=item.quantity,
                 unit_price=unit_price
             ))
-    except requests.HTTPError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=f"Catalog error: {e.response.text}")
-    except requests.RequestException:
-        raise HTTPException(status_code=500, detail="Não foi possível validar o produto. Serviço de Catálogo offline ou inacessível.")
 
-    # 4. Persiste o Pedido
-    logging.info("Persistindo pedido no banco de dados...")
-    db_order = models.Order(user_id=order.user_id, total_price=total_price)
-    db.add(db_order)
-    db.commit()
-    db.refresh(db_order)
+        # 4. Persiste o Pedido
+        logging.info("Persistindo pedido no banco de dados...")
+        db_order = models.Order(user_id=order.user_id, total_price=total_price)
+        db.add(db_order)
+        db.commit()
+        db.refresh(db_order)
 
-    for oi in items_to_save:
-        oi.order_id = db_order.id
-        db.add(oi)
-    
-    db.commit()
-    db.refresh(db_order)
-    return db_order
+        for oi in items_to_save:
+            oi.order_id = db_order.id
+            db.add(oi)
+        
+        db.commit()
+        db.refresh(db_order)
+
+        # 5. Publica evento assíncrono para o notification-service via RabbitMQ
+        event_data = {
+            "order_id": db_order.id,
+            "user_id": order.user_id,
+            "username": current_user,
+            "total_price": total_price,
+            "items": [
+                {
+                    "product_id": oi.product_id,
+                    "product_name": catalog[oi.product_id]["name"],
+                    "quantity": oi.quantity,
+                    "unit_price": oi.unit_price
+                }
+                for oi in items_to_save
+            ]
+        }
+        # Publica em thread separada para não bloquear a resposta ao cliente
+        threading.Thread(
+            target=publish_order_created,
+            args=(event_data,),
+            daemon=True
+        ).start()
+
+        return db_order
+
+    except Exception as e:
+        # 5. COMPENSAÇÃO (Rollback de Estoque)
+        if items_reserved:
+            logging.warning(f"Erro ao criar pedido (Erro: {str(e)}). Iniciando reversão de estoque para {len(items_reserved)} itens...")
+            for item in items_reserved:
+                try:
+                    # Devolve o estoque enviando delta positivo
+                    requests.patch(
+                        f"{CATALOG_SERVICE_URL}/catalog/{item.product_id}/stock",
+                        json={"quantity_delta": item.quantity},
+                        headers=headers
+                    )
+                    logging.info(f"Estoque do produto {item.product_id} revertido com sucesso.")
+                except Exception as re:
+                    logging.error(f"FALHA CRÍTICA: Não foi possível reverter estoque do produto {item.product_id}: {re}")
+        
+        # Propaga o erro original
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Erro interno ao processar pedido: {str(e)}")
 
 @app.get("/orders/", response_model=list[schemas.OrderResponse])
 def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

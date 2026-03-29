@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -40,6 +41,7 @@ def seed_users():
 seed_users()
 
 app = FastAPI(title="Users Service", version="1.0.0")
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
