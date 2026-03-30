@@ -19,6 +19,8 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -35,7 +37,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             detail="Invalid token"
         )
 
-Base.metadata.create_all(bind=engine)
+if not TESTING:
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Users Service", version="1.0.0")
 Instrumentator().instrument(app).expose(app)

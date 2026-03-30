@@ -21,6 +21,8 @@ SECRET_KEY = os.getenv("JWT_SECRET", "351656f50b44558e805567c293708dfd919a27c006
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://localhost:8001/login")
 
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -31,7 +33,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-Base.metadata.create_all(bind=engine)
+if not TESTING:
+    Base.metadata.create_all(bind=engine)
 
 def seed_db():
     db = SessionLocal()
@@ -48,7 +51,8 @@ def seed_db():
     finally:
         db.close()
 
-seed_db()
+if not TESTING:
+    seed_db()
 
 app = FastAPI(title="Orders Service", version="1.0.0")
 Instrumentator().instrument(app).expose(app)

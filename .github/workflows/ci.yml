@@ -22,12 +22,16 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
+        env:
+          TESTING: "true"
         run: |
           cd backend/${{ matrix.service }}
           pip install -r requirements.txt
           pip install pytest httpx
 
       - name: Run Tests
+        env:
+          TESTING: "true"
         run: |
           cd backend/${{ matrix.service }}
           pytest -v
