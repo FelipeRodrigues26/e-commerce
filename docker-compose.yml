@@ -39,7 +39,7 @@ services:
       - "8002:8000"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/orders_db
-      - USERS_SERVICE_URL=http://users-service:8000
+      - API_GATEWAY_URL=http://api-gateway:8000
       - JWT_SECRET=351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2
     depends_on:
       db-server:
@@ -122,7 +122,7 @@ services:
       - SMTP_PORT=587
       - SMTP_USER=felipemrodrigues26@gmail.com
       - SMTP_PASSWORD=dkaufiqbnwasbcok
-      - USERS_SERVICE_URL=http://users-service:8000
+      - API_GATEWAY_URL=http://api-gateway:8000
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -142,6 +142,19 @@ services:
       - "3002:3000"
     depends_on:
       - prometheus
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    ports:
+      - "8080:8000"
+    environment:
+      - USERS_SERVICE_URL=http://users-service:8000
+      - ORDERS_SERVICE_URL=http://orders-service:8000
+      - CATALOG_SERVICE_URL=http://catalog-service:8000
+    depends_on:
+      - users-service
+      - orders-service
+      - catalog-service
 
 volumes:
   postgres_data:

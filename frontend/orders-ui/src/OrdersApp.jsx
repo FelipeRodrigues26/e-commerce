@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:8002/orders';
-
 function OrdersApp() {
   const [orders, setOrders] = useState([]);
   const [catalog, setCatalog] = useState([]);
@@ -18,10 +16,10 @@ function OrdersApp() {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
   });
-
+  const API_GATEWAY_URL = "http://localhost:8080";  
   const fetchOrders = async () => {
     try {
-      const res = await fetch(API_URL + '/', { headers: getHeaders() });
+      const res = await fetch(`${API_GATEWAY_URL}/api/orders/`, { headers: getHeaders() });
       if (!res.ok) throw new Error("Service error");
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
@@ -33,7 +31,7 @@ function OrdersApp() {
 
   const fetchCatalog = async () => {
     try {
-      const res = await fetch('http://localhost:8003/catalog/', { headers: getHeaders() });
+      const res = await fetch(`${API_GATEWAY_URL}/api/catalog/`, { headers: getHeaders() });
       if (!res.ok) throw new Error("Service error");
       const data = await res.json();
       const sortedData = Array.isArray(data) ? data : [];
@@ -49,7 +47,7 @@ function OrdersApp() {
   const fetchOrderById = async () => {
     if (!searchId) return;
     try {
-      const res = await fetch(`${API_URL}/${searchId}`, { headers: getHeaders() });
+      const res = await fetch(`${API_GATEWAY_URL}/api/orders/${searchId}`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
         setSearchResult(data);
@@ -87,7 +85,7 @@ function OrdersApp() {
         return;
     }
     const payload = {
-        user_id: 1, // MVP User
+        user_id: 1, // User
         items: cart.map(item => ({ 
             product_id: Number(item.product_id), 
             quantity: Number(item.quantity),
@@ -96,7 +94,7 @@ function OrdersApp() {
     };
     console.log("Enviando Pedido:", payload);
 
-    const res = await fetch(API_URL + '/', {
+    const res = await fetch(`${API_GATEWAY_URL}/api/orders/`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(payload)
@@ -141,7 +139,7 @@ function OrdersApp() {
 
   const updateStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API_URL}/${id}/status`, {
+      const res = await fetch(`${API_GATEWAY_URL}/api/orders/${id}/status`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ status })

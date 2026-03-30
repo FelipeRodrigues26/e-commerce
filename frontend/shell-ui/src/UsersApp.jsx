@@ -10,9 +10,11 @@ function UsersApp() {
     'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
   });
 
+  const API_GATEWAY_URL = "http://localhost:8080";
+
   const fetchUsers = async () => {
     try {
-      const res = await fetch('http://localhost:8001/users/', { headers: getHeaders() });
+      const res = await fetch(`${API_GATEWAY_URL}/api/users/`, { headers: getHeaders() });
       if (!res.ok) throw new Error("Service down");
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
@@ -30,7 +32,7 @@ function UsersApp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:8001/users/', {
+      const res = await fetch(`${API_GATEWAY_URL}/api/users/`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(form)

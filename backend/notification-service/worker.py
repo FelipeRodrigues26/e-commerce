@@ -19,7 +19,7 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
+API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "http://api-gateway:8000")
 
 EXCHANGE = "order.events"
 QUEUE = "order.notifications"
@@ -29,7 +29,7 @@ ROUTING_KEY = "order.created"
 def get_user_email(user_id: int, headers: dict) -> str | None:
     """Busca o e-mail do usuário no users-service."""
     try:
-        resp = requests.get(f"{USERS_SERVICE_URL}/users/{user_id}", timeout=5, headers=headers)
+        resp = requests.get(f"{API_GATEWAY_URL}/api/users/{user_id}", timeout=5, headers=headers)
         if resp.status_code == 200:
             return resp.json().get("email")
     except Exception as e:

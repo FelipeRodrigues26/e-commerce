@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:8003/catalog';
+const API_GATEWAY_URL = "http://localhost:8080";  
 
 function CatalogApp() {
   const [items, setItems] = useState([]);
@@ -16,7 +16,7 @@ function CatalogApp() {
 
   const fetchCatalog = async () => {
     try {
-      const res = await fetch(`${API_URL}/?t=${Date.now()}`, {
+      const res = await fetch(`${API_GATEWAY_URL}/api/catalog/?t=${Date.now()}`, {
         headers: getHeaders()
       });
       if (!res.ok) throw new Error("Service down");
@@ -36,7 +36,7 @@ function CatalogApp() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(API_URL + '/', {
+      const res = await fetch(`${API_GATEWAY_URL}/api/catalog/`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(form)
@@ -66,7 +66,7 @@ function CatalogApp() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/${editingId}`, {
+      const res = await fetch(`${API_GATEWAY_URL}/api/catalog/${editingId}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(form)
@@ -86,7 +86,7 @@ function CatalogApp() {
   const handleDelete = async (id) => {
     if (!confirm('Deseja excluir este item?')) return;
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: getHeaders() });
+      const res = await fetch(`${API_GATEWAY_URL}/api/catalog/${id}`, { method: 'DELETE', headers: getHeaders() });
       if (res.ok) {
         fetchCatalog();
         setFeedback({ type: 'success', message: 'Produto excluído com sucesso! 🗑️' });

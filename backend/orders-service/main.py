@@ -66,8 +66,7 @@ app.add_middleware(
 )
 app.add_middleware(CorrelationIdMiddleware)
 
-USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
-CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://catalog-service:8000")
+API_GATEWAY_URL = os.getenv("API_GATEWAY_URL", "http://api-gateway:8000")
 
 @app.post("/orders/", response_model=schemas.OrderResponse)
 def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme), current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -79,7 +78,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
     
     # 1. Valida Usuário no Users Service
     try:
-        user_res = requests.get(f"{USERS_SERVICE_URL}/users/by-username/{current_user}",headers=headers)
+        user_res = requests.get(f"{API_GATEWAY_URL}/api/users/by-username/{current_user}",headers=headers)
         user_res.raise_for_status()
         user = user_res.json()
         user_id = user["id"]
@@ -93,7 +92,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
     # 2. Valida Produtos e Estoque no Catalog Service
     try:
         logging.info("Validando estoque e preços no catálogo...")
-        cat_res = requests.get(f"{CATALOG_SERVICE_URL}/catalog/", headers=headers)
+        cat_res = requests.get(f"{API_GATEWAY_URL}/api/catalog/", headers=headers)
         cat_res.raise_for_status()
         catalog = {p["id"]: p for p in cat_res.json()}
 
@@ -114,7 +113,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
 
             # 3. Baixa o Estoque (Reserva temporária)
             stock_res = requests.patch(
-                f"{CATALOG_SERVICE_URL}/catalog/{item.product_id}/stock",
+                f"{API_GATEWAY_URL}/api/catalog/{item.product_id}/stock",
                 json={"quantity_delta": -item.quantity},
                 headers=headers
             )
@@ -178,7 +177,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
                 try:
                     # Devolve o estoque enviando delta positivo
                     requests.patch(
-                        f"{CATALOG_SERVICE_URL}/catalog/{item.product_id}/stock",
+                        f"{API_GATEWAY_URL}/api/catalog/{item.product_id}/stock",
                         json={"quantity_delta": item.quantity},
                         headers=headers
                     )

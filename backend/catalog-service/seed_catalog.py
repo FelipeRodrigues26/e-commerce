@@ -1,7 +1,7 @@
 import requests
 import random
 
-API_URL = "http://localhost:8000/catalog/"
+API_GATEWAY_URL = "http://localhost:8080";  
 
 products = [
     "Teclado Mecânico", "Mouse Gamer", "Monitor 4K", "Headset Bluetooth", 
@@ -29,7 +29,7 @@ def seed():
             "stock": random.randint(10, 100)
         }
         try:
-            res = requests.post(API_URL, json=payload)
+            res = requests.post(f"{API_GATEWAY_URL}/api/catalog/" , json=payload)
             if res.status_code == 200:
                 print(f"✅ Adicionado: {name}")
             else:
