@@ -41,7 +41,7 @@ function LoginForm({ onLogin }) {
 
   return (
     <div style={{ maxWidth: 350, margin: '80px auto', padding: '2rem', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontFamily: 'sans-serif' }}>
-       <h2 style={{marginTop: 0, textAlign: 'center'}}>Login no MVP</h2>
+       <h2 style={{marginTop: 0, textAlign: 'center'}}>Login</h2>
        {error && <p style={{color: 'red', textAlign: 'center', fontSize: '14px'}}>{error}</p>}
        <form onSubmit={handleSubmit}>
          <div style={{marginBottom: '1rem'}}>
