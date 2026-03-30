@@ -69,7 +69,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Usuário ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.username, "name": user.name})
@@ -79,7 +79,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def create_user(user: schemas.UserCreate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter((models.User.email == user.email) | (models.User.username == user.username)).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email or Username already registered")
+        raise HTTPException(status_code=400, detail="Email ou Username já cadastrado")
     
     hashed_password = get_password_hash(user.password)
     new_user = models.User(
@@ -102,7 +102,7 @@ def list_users(skip: int = 0, limit: int = 100, current_user: str = Depends(get_
 def get_user(user_id: int, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return user
     
 @app.get("/users/by-username/{username}", response_model=schemas.UserResponse)
@@ -110,7 +110,7 @@ def get_user_by_username(username: str, current_user: str = Depends(get_current_
     user = db.query(models.User).filter(models.User.username == username).first()
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     return user
 

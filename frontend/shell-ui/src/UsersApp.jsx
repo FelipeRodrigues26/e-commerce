@@ -32,7 +32,7 @@ function UsersApp() {
     try {
       const res = await fetch('http://localhost:8001/users/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(form)
       });
       if (res.ok) {
