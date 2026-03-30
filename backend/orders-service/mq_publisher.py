@@ -11,7 +11,7 @@ EXCHANGE = "order.events"
 ROUTING_KEY = "order.created"
 
 
-def publish_order_created(order_data: dict, correlation_id: str):
+def publish_order_created(order_data: dict, headers: dict):
     """
     Publica um evento de pedido criado na exchange do RabbitMQ.
     order_data deve conter: order_id, user_id, username, total_price, items
@@ -30,7 +30,8 @@ def publish_order_created(order_data: dict, correlation_id: str):
                 routing_key=ROUTING_KEY,
                 body=message,
                 properties=pika.BasicProperties(
-                    delivery_mode=2  # mensagem persistente
+                    delivery_mode=2,  # mensagem persistente
+                    headers=headers
                 )
             )
             connection.close()

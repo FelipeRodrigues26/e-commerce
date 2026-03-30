@@ -9,10 +9,15 @@ function CatalogApp() {
   const [editingId, setEditingId] = useState(null);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
 
+  const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+  });
+
   const fetchCatalog = async () => {
     try {
       const res = await fetch(`${API_URL}/?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: getHeaders()
       });
       if (!res.ok) throw new Error("Service down");
       const data = await res.json();
@@ -33,7 +38,7 @@ function CatalogApp() {
     try {
       const res = await fetch(API_URL + '/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(form)
       });
       if (res.ok) {
@@ -63,7 +68,7 @@ function CatalogApp() {
     try {
       const res = await fetch(`${API_URL}/${editingId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(form)
       });
       if (res.ok) {
@@ -81,7 +86,7 @@ function CatalogApp() {
   const handleDelete = async (id) => {
     if (!confirm('Deseja excluir este item?')) return;
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE', headers: getHeaders() });
       if (res.ok) {
         fetchCatalog();
         setFeedback({ type: 'success', message: 'Produto excluído com sucesso! 🗑️' });

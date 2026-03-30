@@ -9,9 +9,25 @@ import os
 import json
 import redis
 from observability import setup_logging, CorrelationIdMiddleware
+import jwt
+from fastapi.security import OAuth2PasswordBearer
+
 
 # Configura logs estruturados
 setup_logging()
+SECRET_KEY = os.getenv("JWT_SECRET", "351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2")
+ALGORITHM = "HS256"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://localhost:8001/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 Base.metadata.create_all(bind=engine)
 
@@ -58,7 +74,7 @@ app.add_middleware(
 app.add_middleware(CorrelationIdMiddleware)
 
 @app.get("/catalog/", response_model=list[schemas.ProductResponse])
-def get_catalog(db: Session = Depends(get_db)):
+def get_catalog(current_user: str = Depends(get_current_user),db: Session = Depends(get_db)):
     # 1. Fallback pattern: Try Redis first
     try:
         cached_catalog = redis_client.get("catalog")
@@ -80,7 +96,7 @@ def get_catalog(db: Session = Depends(get_db)):
     return products
 
 @app.post("/catalog/", response_model=schemas.ProductResponse)
-def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+def create_product(product: schemas.ProductCreate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     new_product = models.Product(**product.model_dump())
     db.add(new_product)
     db.commit()
@@ -93,7 +109,7 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
     return new_product
 
 @app.delete("/catalog/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(product_id: int, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -107,7 +123,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     return {"detail": "Product deleted"}
 
 @app.patch("/catalog/{product_id}", response_model=schemas.ProductResponse)
-def update_product(product_id: int, product_update: schemas.ProductUpdate, db: Session = Depends(get_db)):
+def update_product(product_id: int, product_update: schemas.ProductUpdate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -128,7 +144,7 @@ def update_product(product_id: int, product_update: schemas.ProductUpdate, db: S
     return product
 
 @app.patch("/catalog/{product_id}/stock", response_model=schemas.ProductResponse)
-def update_stock(product_id: int, stock_update: schemas.ProductStockUpdate, db: Session = Depends(get_db)):
+def update_stock(product_id: int, stock_update: schemas.ProductStockUpdate, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
     logging.info(f"🏬 Atualizando estoque do produto {product_id}. Delta: {stock_update.quantity_delta}")
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:

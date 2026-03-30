@@ -157,11 +157,10 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
             ]
         }
         # Publica em thread separada para não bloquear a resposta ao cliente
-        correlation_id = get_correlation_id()
         ctx = contextvars.copy_context()
 
         threading.Thread(
-            target=lambda: ctx.run(publish_order_created, event_data, correlation_id),
+            target=lambda: ctx.run(publish_order_created, event_data, headers),
             daemon=True
         ).start()
 
@@ -189,7 +188,7 @@ def create_order(order: schemas.OrderCreate, token: str = Depends(oauth2_scheme)
         raise HTTPException(status_code=500, detail=f"Erro interno ao processar pedido: {str(e)}")
 
 @app.get("/orders/", response_model=list[schemas.OrderResponse])
-def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     orders = db.query(models.Order).order_by(models.Order.id.desc()).offset(skip).limit(limit).all()
     return orders
 

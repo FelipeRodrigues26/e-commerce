@@ -26,10 +26,10 @@ QUEUE = "order.notifications"
 ROUTING_KEY = "order.created"
 
 
-def get_user_email(user_id: int) -> str | None:
+def get_user_email(user_id: int, headers: dict) -> str | None:
     """Busca o e-mail do usuário no users-service."""
     try:
-        resp = requests.get(f"{USERS_SERVICE_URL}/users/{user_id}", timeout=5)
+        resp = requests.get(f"{USERS_SERVICE_URL}/users/{user_id}", timeout=5, headers=headers)
         if resp.status_code == 200:
             return resp.json().get("email")
     except Exception as e:
@@ -82,10 +82,11 @@ def on_message(ch, method, properties, body):
     """Callback chamado quando uma mensagem chega na fila."""
     try:
         order_data = json.loads(body)
+        headers = properties.headers
         log.info(f"Evento recebido: pedido #{order_data.get('order_id')} do usuário {order_data.get('username')}")
 
         user_id = order_data.get("user_id")
-        to_email = get_user_email(user_id) if user_id else None
+        to_email = get_user_email(user_id, headers) if user_id else None
 
         if to_email:
             send_email(to_email, order_data)

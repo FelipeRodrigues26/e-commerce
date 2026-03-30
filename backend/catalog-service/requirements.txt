@@ -5,6 +5,7 @@ psycopg2-binary==2.9.9
 pydantic==2.4.2
 redis==5.0.1
 pytest
+pyjwt
 pytest-asyncio
 httpx
 requests
