@@ -13,15 +13,27 @@ function OrdersApp() {
   const [feedback, setFeedback] = useState({ type: '', message: '' });
   const [aiInsights, setAiInsights] = useState({});
   const [aiLoading, setAiLoading] = useState({});
+  const AUTH_ERROR_MESSAGE = 'Token invalido ou expirado. Faca login novamente.';
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
   });
   const API_GATEWAY_URL = "http://localhost:8080";  
+
+  const handleAuthError = () => {
+    localStorage.removeItem('jwt_token');
+    setFeedback({ type: 'error', message: AUTH_ERROR_MESSAGE });
+    setTimeout(() => window.location.reload(), 1200);
+  };
+
   const fetchOrders = async () => {
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/orders/`, { headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (!res.ok) throw new Error("Service error");
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
@@ -34,6 +46,10 @@ function OrdersApp() {
   const fetchCatalog = async () => {
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/catalog/`, { headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return [];
+      }
       if (!res.ok) throw new Error("Service error");
       const data = await res.json();
       const sortedData = Array.isArray(data) ? data : [];
@@ -50,6 +66,10 @@ function OrdersApp() {
     if (!searchId) return;
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/orders/${searchId}`, { headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setSearchResult(data);
@@ -102,6 +122,11 @@ function OrdersApp() {
       body: JSON.stringify(payload)
     });
 
+    if (res.status === 401) {
+        handleAuthError();
+        return;
+    }
+
     if (res.ok) {
         fetchOrders();
         fetchCatalog(); 
@@ -146,6 +171,10 @@ function OrdersApp() {
         headers: getHeaders(),
         body: JSON.stringify({ status })
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         setFeedback({ type: 'success', message: 'Status atualizado com sucesso! ✅' });
         await fetchOrders();
@@ -167,6 +196,10 @@ function OrdersApp() {
     try {
       setAiLoading(prev => ({ ...prev, [orderId]: true }));
       const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}/ai-priority`, { headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       const data = await res.json();
 
       if (!res.ok) {

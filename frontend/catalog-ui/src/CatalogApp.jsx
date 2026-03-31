@@ -9,17 +9,28 @@ function CatalogApp() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
+  const AUTH_ERROR_MESSAGE = 'Token invalido ou expirado. Faca login novamente.';
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
   });
 
+  const handleAuthError = () => {
+    localStorage.removeItem('jwt_token');
+    setFeedback({ type: 'error', message: AUTH_ERROR_MESSAGE });
+    setTimeout(() => window.location.reload(), 1200);
+  };
+
   const fetchCatalog = async () => {
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/catalog/?t=${Date.now()}`, {
         headers: getHeaders()
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (!res.ok) throw new Error("Service down");
       const data = await res.json();
       const sortedData = Array.isArray(data) ? data.sort((a, b) => a.id - b.id) : [];
@@ -42,6 +53,10 @@ function CatalogApp() {
         headers: getHeaders(),
         body: JSON.stringify(form)
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         setForm({ name: '', price: 0, description: '', stock: 0 });
         fetchCatalog();
@@ -72,6 +87,10 @@ function CatalogApp() {
         headers: getHeaders(),
         body: JSON.stringify(form)
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         cancelEdit();
         fetchCatalog();
@@ -88,6 +107,10 @@ function CatalogApp() {
     if (!confirm('Deseja excluir este item?')) return;
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/catalog/${id}`, { method: 'DELETE', headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         fetchCatalog();
         setFeedback({ type: 'success', message: 'Produto excluído com sucesso! 🗑️' });

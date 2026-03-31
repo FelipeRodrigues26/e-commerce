@@ -4,6 +4,7 @@ function UsersApp() {
   const [users, setUsers] = useState([]);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
   const [form, setForm] = useState({ username: '', name: '', email: '', password: '' });
+  const AUTH_ERROR_MESSAGE = 'Token invalido ou expirado. Faca login novamente.';
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -12,9 +13,19 @@ function UsersApp() {
 
   const API_GATEWAY_URL = "http://localhost:8080";
 
+  const handleAuthError = () => {
+    localStorage.removeItem('jwt_token');
+    setFeedback({ type: 'error', message: AUTH_ERROR_MESSAGE });
+    setTimeout(() => window.location.reload(), 1200);
+  };
+
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_GATEWAY_URL}/api/users/`, { headers: getHeaders() });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (!res.ok) throw new Error("Service down");
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
@@ -37,6 +48,10 @@ function UsersApp() {
         headers: getHeaders(),
         body: JSON.stringify(form)
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         setForm({ username: '', name: '', email: '', password: '' });
         fetchUsers();
