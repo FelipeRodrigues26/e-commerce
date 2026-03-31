@@ -68,6 +68,14 @@ Decisões técnicas
 - Para evitar recomendações incoerentes, a camada de IA aplica regras de consistência por status (ex.: ENVIADO/ENTREGUE).
 - Observabilidade combina logs estruturados com correlação por Correlation ID e métricas HTTP expostas para Prometheus/Grafana.
 
+Decisões de evolução arquitetural
+
+- Adotar SSO com Keycloak (OIDC/OAuth2), centralizando identidade, autenticação e gestão de sessão para frontend e microsserviços.
+- Evoluir para BFF por domínio (ex.: BFF de pedidos e BFF de catálogo), reduzindo acoplamento entre frontend e contratos internos.
+- Introduzir Service Discovery (ex.: Consul ou Eureka) para registro e descoberta dinâmica de serviços, reduzindo dependência de endpoints estáticos.
+- Externalizar segredos para um cofre (ex.: Vault/AWS Secrets Manager), removendo credenciais sensíveis do compose e do código.
+- Implementar tracing distribuído (OpenTelemetry + Jaeger/Tempo) para visibilidade fim a fim entre gateway, serviços e mensageria.
+
 
 Como executar
 
@@ -187,4 +195,3 @@ cd backend/users-service && pytest -v
 cd backend/orders-service && pytest -v
 cd backend/catalog-service && pytest -v
 ```
-
