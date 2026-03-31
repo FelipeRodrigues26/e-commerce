@@ -41,6 +41,11 @@ services:
       - DATABASE_URL=postgresql://admin:adminpassword@db-server:5432/orders_db
       - API_GATEWAY_URL=http://api-gateway:8000
       - JWT_SECRET=351656f50b44558e805567c293708dfd919a27c00681b95ec3df16e25605d8f2
+      - AI_PROVIDER=${AI_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
     depends_on:
       db-server:
         condition: service_healthy
@@ -151,6 +156,7 @@ services:
       - USERS_SERVICE_URL=http://users-service:8000
       - ORDERS_SERVICE_URL=http://orders-service:8000
       - CATALOG_SERVICE_URL=http://catalog-service:8000
+      - GATEWAY_TIMEOUT_SECONDS=${GATEWAY_TIMEOUT_SECONDS:-35}
     depends_on:
       - users-service
       - orders-service
@@ -158,4 +164,3 @@ services:
 
 volumes:
   postgres_data:
-

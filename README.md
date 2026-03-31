@@ -1,42 +1,23 @@
-# E-Commerce Gestão de Pedidos (MVP)
+﻿E-Commerce - Plataforma Interna de Gestão de Pedidos
 
-Este é um projeto de MVP para a plataforma interna de gestão de pedidos de uma empresa de e-commerce, construído utilizando uma arquitetura de Microsserviços e Microfrontends.
+Este repositório contém um PMV de uma plataforma interna para gestão de pedidos em e-commerce.
+A implementação usa arquitetura de microsserviços no backend e microfrontends no frontend.
 
-## 🚀 Instruções de Execução
+Arquitetura
 
-### Pré-requisitos
-- Docker e Docker Compose instalados e em execução.
-- Git.
+Backend
+- users-service (porta 8001): autenticação e usuários
+- orders-service (porta 8002): criação e gestão de pedidos
+- catalog-service (porta 8003): produtos e estoque
+- api-gateway (porta 8080): ponto único de entrada para o frontend
+- notification-service: consumidor de eventos para notificações
 
-### Passos
-1. Clone o repositório.
-2. Na raiz do projeto, suba toda a stack Docker:
-   ```bash
-   docker-compose up --build
-   ```
-3. Acesse a aplicação no seu navegador:
-   - **Shell UI (Host Principal)**: [http://localhost:3000](http://localhost:3000)
-4. Acesse a documentação nativa das APIs (Swagger):
-   - **Users Service**: [http://localhost:8001/docs](http://localhost:8001/docs)
-   - **Orders Service**: [http://localhost:8002/docs](http://localhost:8002/docs)
-   - **Catalog Service**: [http://localhost:8003/docs](http://localhost:8003/docs)
+Frontend
+- shell-ui (porta 3000): host principal
+- orders-ui (porta 3001): módulo de pedidos
+- catalog-ui (porta 3003): módulo de catálogo
 
-## 🏗️ Arquitetura Final
-
-O projeto utiliza uma malha de **3 microsserviços** e **3 microfrontends** independentes:
-
-- **Backend (FastAPI)**:
-    - **Users Service**: Responsável por autenticação JWT e gestão de usuários.
-    - **Catalog Service**: Gere o catálogo de produtos e inventário, utilizando **Redis** para cache de alta performance.
-    - **Orders Service**: Orquestra pedidos no modelo **Mestre/Detalhe**, validando estoque síncronamente com o catálogo.
-- **Frontend (React/Vite)**: 
-    - **Shell (Porta 3000)**: Host que integra os MFEs via Module Federation.
-    - **Orders UI (Porta 3001)**: Sistema de carrinho, listagem e busca por ID.
-    - **Catalog UI (Porta 3003)**: Gestão de produtos e visibilidade de estoque.
-- **Persistência**: PostgreSQL com 3 bancos de dados lógicos isolados (`users_db`, `catalog_db`, `orders_db`).
-- **Cache**: Redis (Cache-Aside Pattern) implementado no serviço de Catálogo.
-
-### Diagrama de Comunicação
+Diagrama de comunicação
 
 ```mermaid
 graph TD
@@ -44,31 +25,139 @@ graph TD
     Shell -- Module Fed --> OrdersMFE[Orders UI]
     Shell -- Module Fed --> CatalogMFE[Catalog UI]
     
-    OrdersMFE -- JWT --> OrdersSvc[Orders Service]
-    CatalogMFE -- JWT --> CatalogSvc[Catalog Service]
+    OrdersMFE -- JWT --> Gateway[API Gateway]
+    CatalogMFE -- JWT --> Gateway[API Gateway]
     
-    OrdersSvc -- HTTP + Token --> CatalogSvc
-    OrdersSvc -- HTTP + Token --> UsersSvc[Users Service]
+    Gateway --> UsersSvc[Users Service]
+    Gateway --> OrdersSvc[Orders Service]
+    Gateway --> CatalogSvc[Catalog Service]
+    
+    OrdersSvc -- HTTP + Token --> Gateway
     
     CatalogSvc -- GET/SET --> Redis[(Redis Cache)]
     
     OrdersSvc --- OrdDB[(Orders DB)]
     CatalogSvc --- CatDB[(Catalog DB)]
     UsersSvc --- UsrDB[(Users DB)]
+
+    OrdersSvc -- order.created --> Rabbit[(RabbitMQ)]
+    Rabbit --> Notify[Notification Service]
 ```
 
-## 🧠 Decisões Técnicas e Diferenciais
+Persistência e infraestrutura
 
-- **Arquitetura Master/Detail**: Essencial para e-commerce, permitindo que um único pedido contenha múltiplos produtos com quantidades variadas.
-- **Persistência de Preço Histórico**: O preço unitário do produto é capturado e persistido no `OrderItem` no momento da criação do pedido. Isso garante a integridade financeira mesmo que o preço do produto mude no catálogo futuramente.
-- **Controle de Estoque Atômico**: A validação e baixa de estoque ocorrem de forma síncrona durante a criação do pedido. Se o catálogo retornar erro de estoque insuficiente, a transação do pedido é interrompida.
-- **Segurança (JWT Propagation)**: Tokens JWT são validados em cada microsserviço e propagados nas chamadas inter-serviços, garantindo que a identidade do usuário seja mantida em toda a cadeia.
-- **Estratégia de Cache**: O uso de Redis no Catálogo reduz drasticamente a latência de leitura, com invalidação automática em qualquer operação de escrita (POST/PATCH/DELETE).
+- PostgreSQL 15 com bancos lógicos separados por serviço: users_db, orders_db, catalog_db
+- Redis para cache de leitura no catálogo
+- RabbitMQ para comunicação assíncrona de eventos
+- Prometheus e Grafana para métricas e monitoramento
+- Docker Compose para subir toda a stack local
 
-## ⏱️ O que ficaria diferente com mais tempo?
+Como executar
 
-- **Mensageria Assíncrona**: Utilização de RabbitMQ ou Kafka para processar notificações e integração com logística após a confirmação do pedido.
-- **Observabilidade**: Adição de Prometheus/Grafana para métricas e Jaeger para rastreamento distribuído (tracing).
-- **IA Generativa**: Integração com LLMs para sugerir prioridades de despacho ou prever demanda de estoque baseada no histórico.
-- **CI/CD**: Expansão do pipeline de CI para deploy automático em ambientes de staging.
+Pré-requisitos
+- Docker e Docker Compose instalados e em execução
+- Portas livres: 3000, 3001, 3002, 3003, 5435, 5672, 6379, 8001, 8002, 8003, 8080, 9090 e 15672
 
+Subir a stack
+
+```bash
+docker-compose up --build
+```
+
+IA gratuita (local com Ollama)
+
+- Instale o Ollama na maquina host: https://ollama.com/download
+- Baixe um modelo leve:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+- O orders-service ja esta configurado por padrao para usar Ollama:
+  - AI_PROVIDER=ollama
+  - OLLAMA_BASE_URL=http://host.docker.internal:11434
+  - OLLAMA_MODEL=llama3.2:3b
+
+- Na interface de pedidos, clique em IA e confirme:
+  - Fonte: ollama
+
+Acessos principais
+- Aplicação principal: http://localhost:3000
+- API Gateway: http://localhost:8080
+- Users Service docs: http://localhost:8001/docs
+- Orders Service docs: http://localhost:8002/docs
+- Catalog Service docs: http://localhost:8003/docs
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3002
+- RabbitMQ Management: http://localhost:15672
+
+Fluxo de demonstração sugerido
+1. Subir a stack com docker-compose up --build
+2. Fazer login na aplicação principal
+3. Criar e consultar usuários
+4. Criar pedido com itens
+5. Filtrar pedidos por status
+6. Atualizar status de pedido
+7. Abrir Swagger dos serviços
+8. Ver métricas no Prometheus e no Grafana
+9. Parar um serviço para demonstrar comportamento degradado
+
+Principais endpoints
+
+Usuários
+- POST /login
+- POST /users/
+- GET /users/
+- GET /users/{user_id}
+- GET /users/by-username/{username}
+
+Pedidos
+- POST /orders/
+- GET /orders/
+- GET /orders/{order_id}
+- GET /orders/{order_id}/ai-priority
+- PATCH /orders/{order_id}/status
+
+Catálogo
+- GET /catalog/
+- POST /catalog/
+- PATCH /catalog/{product_id}
+- PATCH /catalog/{product_id}/stock
+- DELETE /catalog/{product_id}
+
+Decisões técnicas
+
+- FastAPI foi adotado para acelerar entrega do PMV com tipagem, validação e OpenAPI automático
+- Modelo de pedidos em mestre-detalhe com Order e OrderItem
+- Preço unitário persistido no momento da compra para manter histórico financeiro
+- Criação de pedido valida usuário, valida estoque/preço, baixa estoque, persiste pedido e publica evento
+- Em caso de falha após reserva de estoque, existe tentativa de compensação
+- Autenticação com JWT e propagação entre serviços
+- Observabilidade com logs estruturados, correlação por X-Correlation-ID e métricas HTTP para Prometheus
+
+Testes e CI
+
+- Testes unitários em users-service, orders-service e catalog-service
+- Pipeline em .github/workflows/ci.yml roda testes em push e pull request para main e master
+
+Comandos de teste local
+
+```bash
+cd backend/users-service && pytest -v
+cd backend/orders-service && pytest -v
+cd backend/catalog-service && pytest -v
+```
+
+Evoluções com mais tempo
+
+- Remover segredos hardcoded e usar gerenciamento seguro de credenciais
+- Refinar políticas de CORS e autorização por recurso
+- Migrar de create_all para migrations com Alembic
+- Expandir testes de integração, contrato e concorrência
+- Fortalecer resiliência com retry e circuit breaker
+- Melhorar experiência dos microfrontends
+- Expandir camada de IA para incluir resumo de risco e recomendação de SLA por lote
+
+Uso de IA no desenvolvimento
+
+Ferramentas de IA podem ter sido usadas como apoio de produtividade para aceleração de boilerplate, revisão de trechos e apoio de documentação, com revisão manual do resultado final.

@@ -11,6 +11,8 @@ function OrdersApp() {
   const [searchResult, setSearchResult] = useState(null);
   const [expandedOrders, setExpandedOrders] = useState({});
   const [feedback, setFeedback] = useState({ type: '', message: '' });
+  const [aiInsights, setAiInsights] = useState({});
+  const [aiLoading, setAiLoading] = useState({});
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -161,6 +163,24 @@ function OrdersApp() {
     setExpandedOrders(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const fetchAiPriority = async (orderId) => {
+    try {
+      setAiLoading(prev => ({ ...prev, [orderId]: true }));
+      const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}/ai-priority`, { headers: getHeaders() });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Falha ao analisar prioridade');
+      }
+
+      setAiInsights(prev => ({ ...prev, [orderId]: data }));
+    } catch (e) {
+      setFeedback({ type: 'error', message: `IA: ${e.message}` });
+    } finally {
+      setAiLoading(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
   const displayOrders = searchResult ? [searchResult] : (filterStatus ? orders.filter(o => o.status === filterStatus) : orders);
 
   return (
@@ -273,12 +293,13 @@ function OrdersApp() {
             <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>Data</th>
             <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>Total</th>
             <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>Status</th>
+            <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>Prioridade IA</th>
             <th style={{padding: '1rem', fontWeight: '600', color: '#475569'}}>Ações</th>
           </tr>
         </thead>
         <tbody>
           {displayOrders.length === 0 && (
-            <tr><td colSpan="5" style={{padding: '3rem', textAlign: 'center', color: '#94a3b8'}}>Nenhum pedido encontrado.</td></tr>
+            <tr><td colSpan="6" style={{padding: '3rem', textAlign: 'center', color: '#94a3b8'}}>Nenhum pedido encontrado.</td></tr>
           )}
           {displayOrders.map(o => (
             <React.Fragment key={o.id}>
@@ -289,7 +310,28 @@ function OrdersApp() {
                 <td style={{padding: '1rem'}}>
                   <span style={{padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', background: o.status === 'PENDENTE' ? '#fef3c7' : o.status === 'ENVIADO' ? '#e0f2fe' : '#dcfce7', color: o.status === 'PENDENTE' ? '#92400e' : o.status === 'ENVIADO' ? '#075985' : '#166534'}}>{o.status}</span>
                 </td>
+                <td style={{padding: '1rem', fontSize: '12px', minWidth: '220px'}}>
+                  {aiInsights[o.id] ? (
+                    <div style={{ display: 'grid', gap: '0.35rem' }}>
+                      <span style={{ fontWeight: '700', color: aiInsights[o.id].priority === 'ALTA' ? '#b91c1c' : aiInsights[o.id].priority === 'MEDIA' ? '#92400e' : '#166534' }}>
+                        {aiInsights[o.id].priority}
+                      </span>
+                      <span style={{ color: '#475569' }}>{aiInsights[o.id].justification}</span>
+                      <span style={{ color: '#1f2937' }}>Ação: {aiInsights[o.id].recommended_action}</span>
+                      <span style={{ color: '#64748b' }}>Fonte: {aiInsights[o.id].source}</span>
+                    </div>
+                  ) : (
+                    <span style={{ color: '#94a3b8' }}>Sem análise</span>
+                  )}
+                </td>
                 <td style={{padding: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                  <button
+                    onClick={() => fetchAiPriority(o.id)}
+                    disabled={!!aiLoading[o.id]}
+                    style={{ padding: '0.4rem 0.8rem', background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                  >
+                    {aiLoading[o.id] ? 'Analisando...' : 'IA'}
+                  </button>
                   <button 
                     onClick={() => toggleExpand(o.id)}
                     style={{ padding: '0.4rem 0.8rem', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
@@ -305,7 +347,7 @@ function OrdersApp() {
               </tr>
               {expandedOrders[o.id] && o.items && (
                 <tr style={{ background: '#f8fafc' }}>
-                  <td colSpan="5" style={{ padding: '0 1rem 1rem 1rem' }}>
+                  <td colSpan="6" style={{ padding: '0 1rem 1rem 1rem' }}>
                     <div style={{ background: 'white', padding: '1rem', borderRadius: 12, border: '1px solid #e2e8f0', marginLeft: '2rem', marginBottom: '1rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                         <h5 style={{ margin: '0 0 1rem 0', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>📦 Itens do Pedido {o.id}:</h5>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>

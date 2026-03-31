@@ -13,6 +13,7 @@ from fastapi.security import OAuth2PasswordBearer
 from observability import setup_logging, CorrelationIdMiddleware, get_correlation_id
 from mq_publisher import publish_order_created
 import contextvars
+from ai_assistant import suggest_order_priority
 
 # Configura logs estruturados em JSON
 setup_logging()
@@ -195,6 +196,21 @@ def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), 
     orders = db.query(models.Order).order_by(models.Order.id.desc()).offset(skip).limit(limit).all()
     return orders
 
+@app.get("/orders/{order_id}/ai-priority", response_model=schemas.OrderPrioritySuggestion)
+def get_order_ai_priority(order_id: int, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Pedido nao encontrado")
+
+    suggestion = suggest_order_priority(order)
+    return {
+        "order_id": order.id,
+        "priority": suggestion["priority"],
+        "justification": suggestion["justification"],
+        "recommended_action": suggestion["recommended_action"],
+        "source": suggestion["source"],
+    }
+
 @app.get("/orders/{order_id}", response_model=schemas.OrderResponse)
 def get_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
@@ -212,4 +228,3 @@ def update_order_status(order_id: int, status_update: schemas.OrderUpdateStatus,
     db.commit()
     db.refresh(order)
     return order
-

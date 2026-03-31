@@ -34,3 +34,11 @@ class OrderResponse(OrderBase):
 
     class Config:
         from_attributes = True
+
+
+class OrderPrioritySuggestion(BaseModel):
+    order_id: int
+    priority: str
+    justification: str
+    recommended_action: str
+    source: str

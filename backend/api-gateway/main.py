@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+﻿from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +19,7 @@ app.add_middleware(
 USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:8000")
 ORDERS_SERVICE_URL = os.getenv("ORDERS_SERVICE_URL", "http://orders-service:8000")
 CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://catalog-service:8000")
+GATEWAY_TIMEOUT_SECONDS = float(os.getenv("GATEWAY_TIMEOUT_SECONDS", "35"))
 
 
 def build_forward_headers(request: Request) -> dict:
@@ -43,7 +44,7 @@ async def forward_request(
 ):
     headers = build_forward_headers(request)
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=GATEWAY_TIMEOUT_SECONDS) as client:
         response = await client.request(
             method=method,
             url=target_url,
@@ -68,7 +69,7 @@ async def forward_request(
 async def login(request: Request):
     form = await request.form()
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=GATEWAY_TIMEOUT_SECONDS) as client:
         response = await client.post(
             f"{USERS_SERVICE_URL}/login",
             data={
@@ -158,6 +159,10 @@ async def list_orders(request: Request):
 async def get_order(order_id: int, request: Request):
     return await forward_request("GET", f"{ORDERS_SERVICE_URL}/orders/{order_id}", request)
 
+@app.get("/api/orders/{order_id}/ai-priority")
+async def get_order_ai_priority(order_id: int, request: Request):
+    return await forward_request("GET", f"{ORDERS_SERVICE_URL}/orders/{order_id}/ai-priority", request)
+
 
 @app.patch("/api/orders/{order_id}/status")
 async def update_order_status(order_id: int, request: Request):
@@ -166,22 +171,22 @@ async def update_order_status(order_id: int, request: Request):
 
 
 # =========================
-# AGREGAÇÃO SIMPLES
+# AGREGAÃ‡ÃƒO SIMPLES
 # =========================
 
 @app.get("/api/dashboard/summary")
 async def dashboard_summary(request: Request):
     headers = build_forward_headers(request)
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=GATEWAY_TIMEOUT_SECONDS) as client:
         catalog_res = await client.get(f"{CATALOG_SERVICE_URL}/catalog/", headers=headers)
         users_res = await client.get(f"{USERS_SERVICE_URL}/users/", headers=headers)
         orders_res = await client.get(f"{ORDERS_SERVICE_URL}/orders/", headers=headers)
 
     if catalog_res.status_code != 200:
-        raise HTTPException(status_code=502, detail="Erro ao consultar catálogo")
+        raise HTTPException(status_code=502, detail="Erro ao consultar catÃ¡logo")
     if users_res.status_code != 200:
-        raise HTTPException(status_code=502, detail="Erro ao consultar usuários")
+        raise HTTPException(status_code=502, detail="Erro ao consultar usuÃ¡rios")
     if orders_res.status_code != 200:
         raise HTTPException(status_code=502, detail="Erro ao consultar pedidos")
 
@@ -199,7 +204,7 @@ async def dashboard_summary(request: Request):
 
 
 # =========================
-# PADRONIZAÇÃO DE ERROS
+# PADRONIZAÃ‡ÃƒO DE ERROS
 # =========================
 
 @app.exception_handler(httpx.RequestError)
@@ -207,7 +212,18 @@ async def httpx_request_error_handler(request: Request, exc: httpx.RequestError)
     return JSONResponse(
         status_code=502,
         content={
-            "detail": "Erro de comunicação com serviço interno",
+            "detail": "Erro de comunicaÃ§Ã£o com serviÃ§o interno",
             "service_error": str(exc),
         },
     )
+
+@app.exception_handler(httpx.TimeoutException)
+async def httpx_timeout_error_handler(request: Request, exc: httpx.TimeoutException):
+    return JSONResponse(
+        status_code=504,
+        content={
+            "detail": "Gateway timeout: o serviço interno demorou para responder",
+            "service_error": str(exc),
+        },
+    )
+
