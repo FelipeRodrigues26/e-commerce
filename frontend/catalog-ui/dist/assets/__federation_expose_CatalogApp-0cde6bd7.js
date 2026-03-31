@@ -29,6 +29,7 @@ const {useState,useEffect} = React;
 const API_GATEWAY_URL = "http://localhost:8080";
 function CatalogApp() {
   const [items, setItems] = useState([]);
+  const [nameFilter, setNameFilter] = useState("");
   const [form, setForm] = useState({ name: "", price: 0, description: "", stock: 0 });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -116,6 +117,14 @@ function CatalogApp() {
       setFeedback({ type: "error", message: "Erro de conexão." });
     }
   };
+  const filteredItems = items.filter((item) => {
+    const query = nameFilter.trim().toLowerCase();
+    if (!query)
+      return true;
+    const byName = item.name.toLowerCase().includes(query);
+    const byId = String(item.id).includes(query);
+    return byName || byId;
+  });
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "1rem" }, children: [
     feedback.message && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: {
       background: feedback.type === "success" ? "#f0fdf4" : "#fef2f2",
@@ -191,7 +200,18 @@ function CatalogApp() {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { marginTop: 0 }, children: "Itens Disponíveis" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: "0.8rem", alignItems: "center", marginBottom: "0.8rem", flexWrap: "wrap" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { style: { margin: 0 }, children: "Itens Disponíveis" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          placeholder: "Filtrar por nome ou ID do produto...",
+          value: nameFilter,
+          onChange: (e) => setNameFilter(e.target.value),
+          style: { padding: "0.55rem 0.7rem", borderRadius: 6, border: "1px solid #d1d5db", minWidth: "280px" }
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("table", { style: { width: "100%", textAlign: "left", borderCollapse: "collapse", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", marginTop: "1rem" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("thead", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }, children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "ID" }),
@@ -201,34 +221,37 @@ function CatalogApp() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Estoque" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Ações" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: items.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9" }, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: p.id }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold", color: "#1e293b" }, children: p.name }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: [
-          "R$",
-          p.price.toFixed(2)
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "13px", background: "white", color: "#64748b" }, children: p.description }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold" }, children: p.stock }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", background: "white", display: "flex", gap: "0.5rem" }, children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              onClick: () => startEdit(p),
-              style: { background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
-              children: "📝 Editar"
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              onClick: () => handleDelete(p.id),
-              style: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
-              children: "🗑️ Excluir"
-            }
-          )
-        ] })
-      ] }, p.id)) })
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("tbody", { children: [
+        filteredItems.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: p.id }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold", color: "#1e293b" }, children: p.name }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", fontSize: "14px", background: "white" }, children: [
+            "R$",
+            p.price.toFixed(2)
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "13px", background: "white", color: "#64748b" }, children: p.description }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px", background: "white", fontWeight: "bold" }, children: p.stock }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", background: "white", display: "flex", gap: "0.5rem" }, children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                onClick: () => startEdit(p),
+                style: { background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
+                children: "📝 Editar"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                onClick: () => handleDelete(p.id),
+                style: { background: "#fee2e2", color: "#dc2626", border: "none", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
+                children: "🗑️ Excluir"
+              }
+            )
+          ] })
+        ] }, p.id)),
+        filteredItems.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "6", style: { padding: "1.2rem", textAlign: "center", color: "#94a3b8", background: "white" }, children: "Nenhum produto encontrado para esse filtro de nome/ID." }) })
+      ] })
     ] })
   ] });
 }

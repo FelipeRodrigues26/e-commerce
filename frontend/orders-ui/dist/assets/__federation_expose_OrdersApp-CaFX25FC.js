@@ -37,6 +37,8 @@ function OrdersApp() {
   const [searchResult, setSearchResult] = useState(null);
   const [expandedOrders, setExpandedOrders] = useState({});
   const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [aiInsights, setAiInsights] = useState({});
+  const [aiLoading, setAiLoading] = useState({});
   const getHeaders = () => ({
     "Content-Type": "application/json",
     "Authorization": `Bearer ${localStorage.getItem("jwt_token")}`
@@ -167,6 +169,21 @@ function OrdersApp() {
   };
   const toggleExpand = (id) => {
     setExpandedOrders((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+  const fetchAiPriority = async (orderId) => {
+    try {
+      setAiLoading((prev) => ({ ...prev, [orderId]: true }));
+      const res = await fetch(`${API_GATEWAY_URL}/api/orders/${orderId}/ai-priority`, { headers: getHeaders() });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.detail || "Falha ao analisar prioridade");
+      }
+      setAiInsights((prev) => ({ ...prev, [orderId]: data }));
+    } catch (e) {
+      setFeedback({ type: "error", message: `IA: ${e.message}` });
+    } finally {
+      setAiLoading((prev) => ({ ...prev, [orderId]: false }));
+    }
   };
   const displayOrders = searchResult ? [searchResult] : filterStatus ? orders.filter((o) => o.status === filterStatus) : orders;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -303,10 +320,11 @@ function OrdersApp() {
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Data" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Total" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Status" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Prioridade IA" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("th", { style: { padding: "1rem", fontWeight: "600", color: "#475569" }, children: "Ações" })
       ] }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("tbody", { children: [
-        displayOrders.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "5", style: { padding: "3rem", textAlign: "center", color: "#94a3b8" }, children: "Nenhum pedido encontrado." }) }),
+        displayOrders.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "6", style: { padding: "3rem", textAlign: "center", color: "#94a3b8" }, children: "Nenhum pedido encontrado." }) }),
         displayOrders.map((o) => /* @__PURE__ */ jsxRuntimeExports.jsxs(React.Fragment, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("tr", { style: { borderBottom: "1px solid #f1f5f9", background: expandedOrders[o.id] ? "#f8fafc" : "white" }, children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "14px" }, children: o.id }),
@@ -316,7 +334,28 @@ function OrdersApp() {
               o.total_price ? o.total_price.toFixed(2) : "0.00"
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { padding: "0.4rem 0.8rem", borderRadius: "20px", fontSize: "11px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", background: o.status === "PENDENTE" ? "#fef3c7" : o.status === "ENVIADO" ? "#e0f2fe" : "#dcfce7", color: o.status === "PENDENTE" ? "#92400e" : o.status === "ENVIADO" ? "#075985" : "#166534" }, children: o.status }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("td", { style: { padding: "1rem", fontSize: "12px", minWidth: "220px" }, children: aiInsights[o.id] ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "grid", gap: "0.35rem" }, children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontWeight: "700", color: aiInsights[o.id].priority === "ALTA" ? "#b91c1c" : aiInsights[o.id].priority === "MEDIA" ? "#92400e" : "#166534" }, children: aiInsights[o.id].priority }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "#475569" }, children: aiInsights[o.id].justification }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { color: "#1f2937" }, children: [
+                "Ação: ",
+                aiInsights[o.id].recommended_action
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { color: "#64748b" }, children: [
+                "Fonte: ",
+                aiInsights[o.id].source
+              ] })
+            ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "#94a3b8" }, children: "Sem análise" }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("td", { style: { padding: "1rem", display: "flex", gap: "0.5rem", alignItems: "center" }, children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  onClick: () => fetchAiPriority(o.id),
+                  disabled: !!aiLoading[o.id],
+                  style: { padding: "0.4rem 0.8rem", background: "#eef2ff", color: "#4338ca", border: "1px solid #c7d2fe", borderRadius: 4, cursor: "pointer", fontSize: "12px", fontWeight: "600" },
+                  children: aiLoading[o.id] ? "Analisando..." : "IA"
+                }
+              ),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
                 {
@@ -332,7 +371,7 @@ function OrdersApp() {
               ] })
             ] })
           ] }),
-          expandedOrders[o.id] && o.items && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { style: { background: "#f8fafc" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "5", style: { padding: "0 1rem 1rem 1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "white", padding: "1rem", borderRadius: 12, border: "1px solid #e2e8f0", marginLeft: "2rem", marginBottom: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }, children: [
+          expandedOrders[o.id] && o.items && /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { style: { background: "#f8fafc" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("td", { colSpan: "6", style: { padding: "0 1rem 1rem 1rem" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { background: "white", padding: "1rem", borderRadius: 12, border: "1px solid #e2e8f0", marginLeft: "2rem", marginBottom: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }, children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("h5", { style: { margin: "0 0 1rem 0", color: "#64748b", display: "flex", alignItems: "center", gap: "8px" }, children: [
               "📦 Itens do Pedido ",
               o.id,

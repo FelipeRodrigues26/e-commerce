@@ -4,6 +4,7 @@ const API_GATEWAY_URL = "http://localhost:8080";
 
 function CatalogApp() {
   const [items, setItems] = useState([]);
+  const [nameFilter, setNameFilter] = useState('');
   const [form, setForm] = useState({ name: '', price: 0, description: '', stock: 0 });
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -98,6 +99,15 @@ function CatalogApp() {
     }
   };
 
+  const filteredItems = items.filter((item) => {
+    const query = nameFilter.trim().toLowerCase();
+    if (!query) return true;
+
+    const byName = item.name.toLowerCase().includes(query);
+    const byId = String(item.id).includes(query);
+    return byName || byId;
+  });
+
   return (
     <div style={{ padding: '1rem' }}>
       {feedback.message && (
@@ -162,7 +172,15 @@ function CatalogApp() {
         </form>
       </div>
 
-      <h3 style={{ marginTop: 0 }}>Itens Disponíveis</h3>
+      <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', marginBottom: '0.8rem', flexWrap: 'wrap' }}>
+        <h3 style={{ margin: 0 }}>Itens Disponíveis</h3>
+        <input
+          placeholder="Filtrar por nome ou ID do produto..."
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          style={{ padding: '0.55rem 0.7rem', borderRadius: 6, border: '1px solid #d1d5db', minWidth: '280px' }}
+        />
+      </div>
       <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginTop: '1rem' }}>
         <thead>
           <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
@@ -175,7 +193,7 @@ function CatalogApp() {
           </tr>
         </thead>
         <tbody>
-          {items.map(p => (
+          {filteredItems.map(p => (
             <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
               <td style={{ padding: '1rem', fontSize: '14px', background: 'white' }}>{p.id}</td>
               <td style={{ padding: '1rem', fontSize: '14px', background: 'white', fontWeight: 'bold', color: '#1e293b' }}>{p.name}</td>
@@ -196,6 +214,13 @@ function CatalogApp() {
               </td>
             </tr>
           ))}
+          {filteredItems.length === 0 && (
+            <tr>
+              <td colSpan="6" style={{ padding: '1.2rem', textAlign: 'center', color: '#94a3b8', background: 'white' }}>
+                Nenhum produto encontrado para esse filtro de nome/ID.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
