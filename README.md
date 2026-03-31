@@ -57,6 +57,7 @@ Persistência e infraestrutura
 Decisões técnicas
 
 - FastAPI foi adotado para acelerar entrega do PMV com tipagem, validação de dados e documentação OpenAPI automática.
+- O frontend foi dividido por domínio de negócio, com um host (shell-ui) e dois remotos independentes (orders-ui e catalog-ui), compostos por Module Federation no Vite. Essa estratégia foi escolhida para permitir evolução por módulo com menor acoplamento entre áreas e menor risco de regressão cruzada: cada MFE mantém seu próprio ciclo de desenvolvimento/build, enquanto o shell centraliza autenticação, navegação e composição da experiência final. O trade-off é o aumento da complexidade de integração no frontend, mas para o PMV essa escolha equilibra bem autonomia dos módulos com experiência unificada para o usuário.
 - O domínio de pedidos usa modelo mestre-detalhe (Order e OrderItem), permitindo múltiplos itens por pedido com rastreabilidade por item.
 - A criação de pedido segue fluxo transacional de negócio: valida usuário, valida estoque e preço, baixa estoque, persiste pedido e publica evento.
 - Em falhas após baixa de estoque, existe tentativa de compensação (rollback de estoque) para reduzir inconsistência operacional.
@@ -186,5 +187,4 @@ cd backend/users-service && pytest -v
 cd backend/orders-service && pytest -v
 cd backend/catalog-service && pytest -v
 ```
-
 
